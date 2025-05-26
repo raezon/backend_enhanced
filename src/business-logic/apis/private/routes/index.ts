@@ -1,0 +1,9 @@
+export { default as clientRoutes } from "./client";
+export { default as userRoutes } from "./user";
+export { default as hotelRoutes } from "./hotel";
+export { default as permissionRoutes } from "./permission";
+export { default as roleRoutes } from "./role";
+export { default as visaRoutes } from "./visa";
+export { default as serviceFeesRoutes } from "./service-fees";
+export { default as agencyRoutes } from "./agency";
+export { default as bookingVisaRoutes } from "./booking-visa";

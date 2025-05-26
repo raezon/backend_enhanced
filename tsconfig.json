@@ -1,0 +1,28 @@
+{
+    "compilerOptions": {
+        "target": "es2016",
+        "module": "commonjs",
+        "rootDir": "./src",
+        "outDir": "./dist",
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "strict": true,
+        "skipLibCheck": true,
+        "noEmitOnError": false,
+        "allowJs": true,
+        "checkJs": false,
+        "noImplicitAny": false,
+        "baseUrl": "./",
+        "typeRoots": ["./node_modules/@types"],
+        "paths": {
+            "@/*": ["src/*"],
+            "@config/*": ["src/config/*"],
+            "@utils/*": ["src/utils/*"],
+            "@types/*": ["src/types/*"],
+            "@business/*": ["src/business-logic/*"]
+        },
+        "types": ["node", "jest"]
+    },
+    "include": ["src/**/*", "node_modules/@types/jest/index.d.ts"],
+    "exclude": ["src/test", "node_modules"]
+}

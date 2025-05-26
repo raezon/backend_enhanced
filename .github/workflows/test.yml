@@ -1,0 +1,65 @@
+name: Test CI
+
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+        branches:
+            - main
+
+permissions:
+    contents: read
+    pull-requests: write
+
+jobs:
+    run-test:
+        name: Run test script
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: "22"
+
+            - run: npm install
+
+            - name: Run tests
+              id: test
+              run: npm run test -- --json --outputFile=test-results.json
+
+            - name: Comment on PR with test results
+              if: github.event_name == 'pull_request'
+              uses: actions/github-script@v6
+              with:
+                  script: |
+                      const fs = require('fs');
+                      const results = JSON.parse(fs.readFileSync('test-results.json', 'utf8'));
+                      let message;
+
+                      if (results.numFailedTests > 0) {
+                        message =
+                          '## 🚨 Test Results: Some tests have failed!\n' +
+                          `- **Total tests:** ${results.numTotalTests}\n` +
+                          `- **Passed:** ${results.numPassedTests}\n` +
+                          `- **Failed:** ${results.numFailedTests} ❌\n` +
+                          `- **Skipped:** ${results.numPendingTests} ⏳\n\n` +
+                          "Let's fix those issues! 💪";
+                      } else {
+                        message =
+                          '## 🎉 Test Results: All tests passed successfully!\n' +
+                          `- **Total tests:** ${results.numTotalTests}\n` +
+                          `- **Passed:** ${results.numPassedTests} ✅\n` +
+                          `- **Failed:** ${results.numFailedTests}\n` +
+                          `- **Skipped:** ${results.numPendingTests} ⏳\n\n` +
+                          "Great job! Keep up the excellent work! 🚀";
+                      }
+
+                      github.rest.issues.createComment({
+                        issue_number: context.payload.pull_request.number,
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        body: message,
+                      });

@@ -1,0 +1,377 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Hotel{
+  id                    String   @id @default(uuid())
+  offerTitle            String   
+  hotelName             String 
+  hotelAddress          String 
+  phoneNumber           String 
+  contactEmail          String 
+  hotelDescription      String 
+  hotelImageUrl         String 
+  stars                 Int   
+  currency              String
+  price                 Float
+  discount              Float?
+  marketType            String?
+  recommended           Boolean? 
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  // minPricePerNight      Float //
+  // maxPricePerNight      Float  both are not used in the new design
+}
+model User {
+  id           String      @id @default(uuid())
+  firstName    String
+  lastName     String
+  username     String      @unique
+  email        String      @unique
+  password     String
+  role         String
+  phoneNumber  String
+  address      String?
+  userActive   Boolean     @default(true)
+  adminActive  Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  agencyInfo   AgencyInfos? @relation(fields: [agency], references: [id])
+  agency       String?      // FK to AgencyInfos.id
+
+  userRoles  UserRole[]
+}
+
+model AgencyInfos {
+  id                      String        @id @default(uuid())
+  agencyName              String        
+  RIZCode                 String
+  email                   String
+  website                 String?
+  agencyAddress           String?
+  phoneNum1               String?
+  phoneNum2               String?
+  phoneNum3               String?
+  MFAType                 String?
+  activated               Boolean?      @default(false)
+  isCompany               Boolean?      @default(false)
+  useTravelersProfiles    Boolean?      @default(false)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  // Relations 
+  logo                    Logo[]
+  users                   User[]
+  accounting              Accounting?
+  authoration             Authoration?
+  products                Products?
+  b2c                     B2C?
+}
+
+model Logo {
+  id         String   @id @default(uuid())
+  agencyId   String
+  logoPath   String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // relations
+  agencyInfos   AgencyInfos  @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+}
+
+model Accounting {
+  id                                     String       @id @default(uuid())
+  localCurrency                          String       
+  localDepositBalance                    Float        @default(0)
+  agencyCommissionHotel                  Float
+  agencyCommissionLowCoTick              Float   
+  hideEtickectPrice                      Boolean     @default(false)
+  hideHotelVoucherPrice                  Boolean     @default(false)
+  hideCancellationPoliciesOnHotelVoucher Boolean     @default(false)
+
+  agencyId                               String       @unique
+  agencyInfos                            AgencyInfos  @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+}
+
+model Authoration {
+  id                                  String       @id @default(uuid())
+  localAutherizedOverdraw             Float
+  confirmBooking                      Boolean      @default(false)
+  GDSBookWithoutBalance               Boolean      @default(false)
+  foreignCurrencycCertAuthorization   Boolean      @default(false)
+
+  agencyId                            String       @unique
+  agencyInfos                         AgencyInfos  @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+}
+
+model Products {
+  id                String       @id @default(uuid())
+  flightBooking     Boolean      @default(false)
+  hotelBooking      Boolean      @default(false)
+  package           Boolean      @default(false)
+  visa              Boolean      @default(false)
+
+  agencyId          String       @unique
+  agencyInfos       AgencyInfos  @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+}
+
+model B2C {
+  id             String       @id @default(uuid())
+  country        String
+  department     String
+  city           String
+  latitude       Float?
+  longitude      Float?
+  B2CpointOfSale Boolean      @default(false)
+
+  agencyId  String            @unique
+  agencyInfos    AgencyInfos  @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+}
+
+
+model Role {
+  id         String    @id @default(uuid())
+  name       String    @unique
+  isDefault  Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime? // For soft delete
+
+  permissions RolePermissions[]
+  userRoles   UserRole[]
+}
+
+model Permission {
+  id         String   @id @default(uuid())
+  resource   String
+  action     String
+  identifier String   @unique // e.g., "vessel:read"
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  roles RolePermissions[]
+}
+
+model RolePermissions {
+  id           String     @id @default(uuid())
+  roleId       String
+  permissionId String
+
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId]) // prevent duplicates
+}
+
+
+model UserRole {
+  id         String   @id @default(uuid())
+  userId     String
+  roleId     String
+  expiresAt  DateTime?
+  reason     Bytes?   // Can be encrypted manually
+  assignedAt DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+
+  //TODO: check if auser can have many roles
+  @@unique([userId, roleId]) 
+  @@index([expiresAt])
+
+}
+
+ // VISA Section
+
+model Country {
+  id              String   @id @default(uuid())
+  name            String   @unique
+  embassyLocation String
+  flagUrl         String
+  embassyWebsite  String?
+  embassyPhone    String?
+  embassyEmail    String?
+  embassyFax      String?
+embassyHours    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // relations
+  visa           Visa[]
+}
+
+model Visa {
+  id           String @id @default(uuid())
+  countryId    String
+  name         String 
+  price        Float
+  currency     String
+  description  String
+  conditions   String
+  status       Boolean     @default(true)
+  duration     String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  deletedAt    DateTime? 
+
+  // relations
+  visaRequest  VisaRequestPivot[]
+  country      Country  @relation(fields: [countryId], references: [id], onDelete: Cascade)
+
+  // index
+  @@index([countryId], name: "visa_countryId_idx")
+}
+
+model VisaRequestPivot {
+  id String @id @default(uuid())
+  visaId String
+  visaRequestId String
+  createdAt DateTime @default(now())
+
+  // relations
+  visa Visa @relation(fields: [visaId], references: [id], onDelete: Cascade)
+  visaRequest VisaRequest @relation(fields: [visaRequestId], references: [id], onDelete: Cascade)
+}
+
+model VisaRequest {
+  id String @id @default(uuid())
+  agentName String
+  agencyName String
+  travelStartingDate DateTime
+  groupSize Int
+  documents String[]
+  nationality String
+  totalPrice String  // total price for all passengers
+  status String @default("Pending") // pending, in_progress, completed, rejected
+  notes String?
+  startedAt DateTime?
+  confirmedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  // relations
+  viseRequestPivot VisaRequestPivot[]
+  // visaRequestDocuments VisaRequestDocuments[]
+  passengers Passenger[]
+}
+
+// model VisaRequestDocuments {
+//   id String @id @default(uuid())
+//   visaRequestId String
+//   visaDocumentId String
+//   providedBy String
+//   isMendatory Boolean
+//   createdAt DateTime @default(now())
+
+//   // relations
+//   visaRequest VisaRequest @relation(fields: [visaRequestId], references: [id], onDelete: Cascade)
+//   visaDocuments VisaDocuments @relation(fields: [visaDocumentId], references: [id], onDelete: Cascade)
+// }
+
+// model VisaDocuments {
+//   id String @id @default(uuid())
+//   filePath String
+//   fileType String
+//   name String
+//   uploadedAt DateTime @default(now())
+
+//   // relations
+//   visaRequestDocuments VisaRequestDocuments[]
+// }
+
+// Passenger Section
+
+model Passenger {
+  id String @id @default(uuid())
+  visaRequestId String
+  name String
+  surname String
+  placeOfBirth String
+  dateOfBirth DateTime
+  passportNumber String
+  passportDeliveryDate DateTime
+  passportExpirationDate DateTime
+  email String
+  phone String
+  notes String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  // relations
+  visaRequest VisaRequest @relation(fields: [visaRequestId], references: [id], onDelete: Cascade)
+  passengerDocuments PassengerDocuments[]
+}
+
+model PassengerDocuments {
+  id String @id @default(uuid())
+  passengerId String
+  documentId String
+  label String?  @default("Document")
+  isMendatory Boolean? @default(true)
+  createdAt DateTime @default(now())
+
+  // relations
+  passenger Passenger @relation(fields: [passengerId], references: [id], onDelete: Cascade)
+  passengerDocumentsFiles PassengerDocumentsFiles @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  
+  @@unique([passengerId, documentId]) // prevent duplicates
+}
+
+model PassengerDocumentsFiles {
+  id String @id @default(uuid())
+  filePath String
+  fileType String
+  name String
+  uploadedAt DateTime @default(now())
+  deletedAt DateTime  @updatedAt
+
+  // relations
+  passengerDocuments PassengerDocuments[]
+}
+
+
+// Service Fees 
+
+model ServiceFees{
+  id            String @id @default(uuid())
+  tourcodeTitle String
+  description   String?
+  GDSProvider   String
+
+  itinerary Itinerary[]
+  accounting ServiceFeesAccounting[]
+}
+
+model Itinerary {
+  id String @id @default(uuid())
+  tourcodeCompany String
+  type        String?
+  itinerary  String
+  classes    String
+  bookingFrom String 
+  bookingTo String
+  departureFrom String
+  departureTo   String
+  active    Boolean @default(false)
+
+  serviceFeesId String
+  serviceFees ServiceFees @relation(fields: [serviceFeesId], references: [id], onDelete: Cascade)
+}
+
+model ServiceFeesAccounting {
+  id String @id @default(uuid())
+  fixedPrice  Float
+  percentage  Float? @default(0)
+  
+  serviceFeesId String
+  serviceFees ServiceFees @relation(fields: [serviceFeesId], references: [id], onDelete: Cascade)
+}
