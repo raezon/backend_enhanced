@@ -2005,6 +2005,123 @@ paths:
       responses:
         '204':
           description: Visa booking deleted successfully
+  /api/private/country:
+    post:
+      summary: Create a new country
+      tags:
+        - Country
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              name: "USA"
+              embassyLocation: "123 Embassy St, Algiers"
+              flagUrl: "https://example.com/flags/usa.png"
+              embassyWebsite: "https://usa-embassy.example.com"
+              embassyPhone: "+123456789"
+              embassyEmail: "contact@usa-embassy.com"
+              embassyFax: "+987654321"
+              embassyHours: "Mon-Fri 9:00-17:00"
+      responses:
+        '201':
+          description: Created a country successfully
+          content:
+            application/json:
+              example:
+                message: "Created a country successfully"
+                data:
+                  id: "uuid"
+                  name: "USA"
+                  embassyLocation: "123 Embassy St, Algiers"
+                  flagUrl: "https://example.com/flags/usa.png"
+                  embassyWebsite: "https://usa-embassy.example.com"
+                  embassyPhone: "+123456789"
+                  embassyEmail: "contact@usa-embassy.com"
+                  embassyFax: "+987654321"
+                  embassyHours: "Mon-Fri 9:00-17:00"
+
+    put:
+      summary: Update a country
+      tags:
+        - Country
+      parameters:
+        - in: query
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              name: "USA Updated"
+              embassyLocation: "456 Embassy Ave, Algiers"
+              flagUrl: "https://example.com/flags/usa.png"
+              embassyWebsite: "https://updated-embassy.example.com"
+              embassyPhone: "+123456789"
+              embassyEmail: "contact@updated-embassy.com"
+              embassyFax: "+987654321"
+              embassyHours: "Mon-Fri 10:00-18:00"
+      responses:
+        '200':
+          description: Successfully updated country
+          content:
+            application/json:
+              example:
+                message: "Successfully updated country"
+                data:
+                  id: "uuid"
+                  name: "USA Updated"
+
+    get:
+      summary: Get all countries
+      tags:
+        - Country
+      responses:
+        '200':
+          description: List of all countries
+          content:
+            application/json:
+              example:
+                message: "Successfully created country"
+                data:
+                  - id: "uuid"
+                    name: "USA"
+                    embassyLocation: "123 Embassy St, Algiers"
+                    flagUrl: "https://example.com/flags/usa.png"
+
+  /api/private/country/{id}:
+    get:
+      summary: Get a country by ID
+      tags:
+        - Country
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Country found
+          content:
+            application/json:
+              example:
+                message: "Successfully created country"
+                data:
+                  id: "uuid"
+                  name: "USA"
+                  embassyLocation: "123 Embassy St, Algiers"
+                  flagUrl: "https://example.com/flags/usa.png"
+        '404':
+          description: Country not found
+          content:
+            application/json:
+              example:
+                message: "Could not find country"
+                code: "NOT_FOUND"
 
 components:
   schemas:
