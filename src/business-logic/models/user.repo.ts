@@ -56,6 +56,10 @@ export const userRepo = {
                 userActive: userActive ?? true,
                 adminActive: adminActive ?? false,
             },
+            select: {
+                id: true,
+                username: true,
+            },
         });
         return newUser;
     },

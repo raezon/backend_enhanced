@@ -1,6 +1,23 @@
 import prisma from "@config/prisma";
 
 export const agencyRepo = {
+    findAllAgencies: async ({ page = 1, limit = 10 } : {page:number , limit:number}) => {
+        const skip = (page - 1) * limit;
+        return prisma.agencyInfos.findMany({
+            skip,
+            take: limit,
+            select: {
+                id: true,
+                agencyName: true,
+                phoneNum1: true,
+                agencyAddress: true,
+                activated: true,
+                accounting: { select: { localDepositBalance: true } },
+                authoration: { select: { localAutherizedOverdraw: true } },
+            },
+        })
+    },
+
     createAgency: async (data:{
         agencyName: string;
         RIZCode: string;

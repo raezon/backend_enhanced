@@ -1,5 +1,6 @@
 import prisma from "@/config/prisma";
 import { Hotel } from "@prisma/client";
+
 export const hotelRepo = {
     create: async ({
         hotel,
@@ -26,6 +27,7 @@ export const hotelRepo = {
 
         return data;
     },
+
     getAll: async ({ limit, page }: { limit: number; page: number }) => {
         const skip = (page - 1) * limit;
 

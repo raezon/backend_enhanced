@@ -4,6 +4,18 @@ import { agencyRepo } from "@business/models/agency.repo";
 import { ConstraintError } from "@business/app/base/constraint-error";
 
 export const agencyController = {
+
+    getAllAgencies : TryCatchBlock(async (req:Request , res:Response) => {
+        const { page = 1, limit = 10 } = req.query;
+        const data = await agencyRepo.findAllAgencies({
+            page:Number(page) ,limit: Number(limit)
+        });
+        res.status(200).json({
+            message: "Agencies retrieved successfully",
+            data,
+        });
+    }),
+
     createNewAgency : TryCatchBlock(async (req:Request , res:Response) => {
         const data = await agencyRepo.createAgency(req.body);
         res.status(201).json({

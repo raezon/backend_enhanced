@@ -547,7 +547,7 @@ paths:
                       details:
                         type: string
                         example: An unexpected error occurred
-  /api/private/hotel:
+  /api/private/hotels:
     post:
       summary: Create a new hotel
       tags:
@@ -678,7 +678,7 @@ paths:
                         type: string
                         example: An unexpected error occurred
 
-  /api/private/hotel/{id}:
+  /api/private/hotels/{id}:
     get:
       summary: Get hotel by ID
       tags:
@@ -1744,6 +1744,22 @@ paths:
                         type: number
                         nullable: true
   /api/private/agency:
+
+    get:
+        summary: Get all agencies
+        tags: [Agency]
+        parameters:
+          - in: query
+            name: page
+            schema:
+              type: integer
+          - in: query
+            name: limit
+            schema:
+              type: integer
+        responses:
+          '200':
+            description: Users retrieved successfully
     post:
       summary: Create a new agency
       tags: [Agency]

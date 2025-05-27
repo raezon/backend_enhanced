@@ -12,22 +12,17 @@ export const verifyAuthorization = async ({
     authHeader: string | undefined;
     flashAll?: boolean;
 }) => {
-    console.log("authHeader", authHeader);
-    console.log("flashAll", flashAll);
 
     if (!authHeader) {
         throw new ConstraintError(
             "Authentication failed",
             403,
             "VALIDATION_ERROR",
-            " No token provided"
+            "No token provided"
         );
     }
 
     const [bearer, token] = authHeader.split(" ");
-    console.log("bearer", bearer);
-    console.log("token", token);
-    console.log("ENV.AUTH_BEARER", ENV.AUTH_BEARER);
 
     if (bearer !== ENV.AUTH_BEARER || !token) {
         throw new ConstraintError(
@@ -62,11 +57,13 @@ export const verifyAuthorization = async ({
         }
 
         if (flashAll === true) {
-            (await rateLimitRedis).client.set(token, "blacklisted");
+          (await rateLimitRedis).client.set(token, "blacklisted");
         }
 
         return { user };
     } catch (err: unknown) {
+        console.log("err" , err);
+
         if (err instanceof TokenExpiredError) {
             throw new ConstraintError("Token expired", 403, "VALIDATION_ERROR", "Token expired");
         } else if (err instanceof ConstraintError) {

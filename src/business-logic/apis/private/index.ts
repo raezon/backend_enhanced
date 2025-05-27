@@ -15,7 +15,7 @@ const router = Router();
 
 router.use("/client", clientRoutes);
 router.use("/users", userRoutes);
-router.use("/hotel", hotelRoutes);
+router.use("/hotels", hotelRoutes);
 router.use("/permission", permissionRoutes);
 router.use("/role", roleRoutes);
 router.use("/visa", visaRoutes);
