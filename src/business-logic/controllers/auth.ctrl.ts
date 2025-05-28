@@ -34,7 +34,7 @@ export const AuthController = {
         }
         const { password: _, updatedAt, address, agency, ...user } = isUser;
 
-        const accessToken = TokenService.generateToken({ id: user.id }, user.role, "15m");
+        const accessToken = TokenService.generateToken({ id: user.id }, user.role, "30d");
         const refreshToken = TokenService.generateToken({ id: user.id }, user.role, "30d");
 
         res.cookie(ENV.REFRESH_HIDEOUT, `${ENV.REFRESH_BEARER} ${refreshToken}`, {
