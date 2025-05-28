@@ -52,14 +52,37 @@ const createApp = async (): Promise<Application> => {
     App.use(helmet());
     App.use(
         cors({
-            origin: (origin, callback) => {
-                callback(null, origin || true);
+            origin: function (origin, callback) {
+                // Allow requests with no origin (mobile apps, Postman, etc.)
+                if (!origin) return callback(null, true);
+
+                // Allow localhost for development
+                if (origin.includes("localhost") || origin.includes("127.0.0.1")) {
+                    return callback(null, true);
+                }
+
+                // Add your production frontend domains here
+                const allowedOrigins = [
+                    "https://your-production-domain.com",
+                    "https://your-staging-domain.com",
+                ];
+
+                if (allowedOrigins.includes(origin)) {
+                    return callback(null, true);
+                }
+
+                // For development, you might want to allow all origins temporarily
+                if (ENV.NODE_ENV === "development") {
+                    return callback(null, true);
+                }
+
+                callback(new Error("Not allowed by CORS"));
             },
             credentials: true,
             allowedHeaders: [ENV.TOKEN_HIDEOUT, "Content-Type", "Authorization"],
+            methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         })
     );
-    App.use;
 
     setupSwagger(App, "/api-docs");
 

@@ -39,11 +39,12 @@ export const AuthController = {
 
         res.cookie(ENV.REFRESH_HIDEOUT, `${ENV.REFRESH_BEARER} ${refreshToken}`, {
             httpOnly: true,
-            secure: ENV.NODE_ENV === "production",
-            sameSite: "none",
+            secure: true, // Always true for deployed backend (HTTPS)
+            sameSite: "none", // Required for cross-origin cookies
             maxAge: 30 * 24 * 60 * 60 * 1000,
+            path: "/",
+            domain: undefined, // Don't set domain for cross-origin
         });
-
         res.status(200).json({
             message: "User signed in successfully",
             data: { ...user, accessToken },
@@ -53,8 +54,9 @@ export const AuthController = {
     signOut: TryCatchBlock(async (_req: Request, res: Response) => {
         res.clearCookie(ENV.REFRESH_HIDEOUT, {
             httpOnly: true,
-            secure: ENV.NODE_ENV === "production",
-            sameSite: "none",
+            secure: true, // Match the original cookie
+            sameSite: "none", // Match the original cookie
+            path: "/",
         });
 
         res.status(200).json({
@@ -64,7 +66,7 @@ export const AuthController = {
 
     refresh: TryCatchBlock(async (req: Request, res: Response) => {
         const authHeader = req.cookies[ENV.REFRESH_HIDEOUT];
-
+        console.log("req.cookies", req.cookies);
         if (!authHeader) {
             throw new ConstraintError(
                 "Authentication failed",
