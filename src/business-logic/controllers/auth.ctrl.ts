@@ -40,7 +40,7 @@ export const AuthController = {
         res.cookie(ENV.REFRESH_HIDEOUT, `${ENV.REFRESH_BEARER} ${refreshToken}`, {
             httpOnly: true,
             secure: ENV.NODE_ENV === "production",
-            sameSite: "strict",
+            sameSite: "none",
             maxAge: 30 * 24 * 60 * 60 * 1000,
         });
 
@@ -54,7 +54,7 @@ export const AuthController = {
         res.clearCookie(ENV.REFRESH_HIDEOUT, {
             httpOnly: true,
             secure: ENV.NODE_ENV === "production",
-            sameSite: "strict",
+            sameSite: "none",
         });
 
         res.status(200).json({

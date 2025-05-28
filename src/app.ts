@@ -6,6 +6,7 @@ import main from "@/seeders/seed";
 
 (async () => {
     const App = await AppPromise;
+    await main();
     // Define a route
     App.use("/", Router);
     // Start the server
