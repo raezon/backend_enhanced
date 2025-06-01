@@ -24,6 +24,17 @@ export const visaCtrl = {
             );
         }
 
+        const countryExists = await countryRepo.countryExist(countryId);
+
+        if (!countryExists) {
+            throw new ConstraintError(
+                "Country not found",
+                404,
+                "RESOURCE_NOT_FOUND",
+                `This Country could not be found`
+            );
+        }
+
         const requiredFields = [
             "name",
             "price",
@@ -42,17 +53,6 @@ export const visaCtrl = {
                     `${field} is a required field`
                 );
             }
-        }
-
-        const countryExists = await countryRepo.countryExist(countryId);
-
-        if (!countryExists) {
-            throw new ConstraintError(
-                "Country not found",
-                404,
-                "RESOURCE_NOT_FOUND",
-                `This Country could not be found`
-            );
         }
 
         const createInput: Prisma.VisaCreateInput = {
