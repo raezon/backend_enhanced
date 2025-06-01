@@ -1,43 +1,32 @@
 import prisma from "@config/prisma";
+import { Prisma } from "@prisma/client";
 
 export const countryRepo = {
-    create: async (data:{
-        name: string;
-        embassyLocation: string;
-        flagUrl: string;
-        embassyWebsite?: string;
-        embassyPhone?: string;
-        embassyEmail?: string;
-        embassyFax?: string;
-        embassyHours?: string;
-    } ) =>{
+    countryExist: async (id: string) => {
+        const count = await prisma.country.count({
+            where: { id },
+        });
+        return count > 0;
+    },
+    create: async (data: Prisma.CountryCreateInput) => {
         return prisma.country.create({
-            data
-        })
+            data,
+        });
     },
 
     findAll: async () => {
         const data = await prisma.country.findMany({
-            orderBy: { name: 'asc' },
+            orderBy: { name: "asc" },
         });
 
         return data;
     },
-    findById: async ({id}:{id:string}) => {
-        const data = await prisma.country.findUnique({where:{id}});
+    findById: async ({ id }: { id: string }) => {
+        const data = await prisma.country.findUnique({ where: { id } });
         return data;
     },
 
-    update : async (data:Partial<{
-        name: string;
-        embassyLocation: string;
-        flagUrl: string;
-        embassyWebsite?: string;
-        embassyPhone?: string;
-        embassyEmail?: string;
-        embassyFax?: string;
-        embassyHours?: string;
-    }> , id:string) => {
-        return prisma.country.update({where:{id} , data:data});
-    }
-}
+    update: async (data: Partial<Prisma.CountryCreateInput>, id: string) => {
+        return prisma.country.update({ where: { id }, data: data });
+    },
+};

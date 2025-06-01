@@ -4,12 +4,18 @@ import { visaRepo } from "@business/models/visa.repo";
 import { ConstraintError } from "@business/app/base/constraint-error";
 import { Prisma } from "@prisma/client";
 import { validate as isValidUuid } from "uuid";
+import { countryRepo } from "../models/country.repo";
 
 export const visaCtrl = {
     createNewVisa: TryCatchBlock(async (req: Request, res: Response) => {
         const { countryId } = req.body;
 
-        if (!countryId || typeof countryId !== "string" || countryId.trim() === "") {
+        if (
+            !countryId ||
+            typeof countryId !== "string" ||
+            countryId.trim() === "" ||
+            !isValidUuid(countryId)
+        ) {
             throw new ConstraintError(
                 "Country ID validation failed",
                 400,
@@ -38,7 +44,16 @@ export const visaCtrl = {
             }
         }
 
-        // get country data using country ID then validate the if it exists or not
+        const countryExists = await countryRepo.countryExist(countryId);
+
+        if (!countryExists) {
+            throw new ConstraintError(
+                "Country not found",
+                404,
+                "RESOURCE_NOT_FOUND",
+                `This Country could not be found`
+            );
+        }
 
         const createInput: Prisma.VisaCreateInput = {
             ...req.body,
@@ -48,6 +63,7 @@ export const visaCtrl = {
         };
 
         const data = await visaRepo.createVisa(createInput);
+
         res.status(201).json({
             message: "Visa created successfully",
             data,
@@ -55,13 +71,13 @@ export const visaCtrl = {
     }),
 
     getVisaById: TryCatchBlock(async (req: Request, res: Response) => {
-        const id = req.params.id;
+        const { id } = req.params;
 
         if (!isValidUuid(id)) {
             throw new ConstraintError(
                 "Invalid ID format",
                 400,
-                "INVALID_ID_FORMAT",
+                "VALIDATION_ERROR",
                 "Visa ID must be a valid UUID"
             );
         }
@@ -84,13 +100,13 @@ export const visaCtrl = {
     }),
 
     updateVisa: TryCatchBlock(async (req: Request, res: Response) => {
-        const id = req.params.id;
+        const { id } = req.params;
 
         if (!isValidUuid(id)) {
             throw new ConstraintError(
                 "Invalid ID format",
                 400,
-                "INVALID_ID_FORMAT",
+                "VALIDATION_ERROR",
                 "Visa ID must be a valid UUID"
             );
         }
@@ -145,6 +161,30 @@ export const visaCtrl = {
             );
         }
 
+        const countryId = req.body;
+
+        if (countryId) {
+            if (!isValidUuid(countryId)) {
+                throw new ConstraintError(
+                    "Invalid ID format",
+                    400,
+                    "VALIDATION_ERROR",
+                    "Visa ID must be a valid UUID"
+                );
+            }
+
+            const countryExists = await countryRepo.countryExist(countryId);
+
+            if (!countryExists) {
+                throw new ConstraintError(
+                    "Country not found",
+                    404,
+                    "RESOURCE_NOT_FOUND",
+                    `This Country could not be found`
+                );
+            }
+        }
+
         const data = await visaRepo.updateVisa(id, req.body);
         res.status(200).json({
             message: "Visa updated successfully",
@@ -159,7 +199,7 @@ export const visaCtrl = {
             throw new ConstraintError(
                 "Invalid ID format",
                 400,
-                "INVALID_ID_FORMAT",
+                "VALIDATION_ERROR",
                 "Visa ID must be a valid UUID"
             );
         }
