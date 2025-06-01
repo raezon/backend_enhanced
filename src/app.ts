@@ -2,11 +2,11 @@ import AppPromise from "@config/express";
 import winston from "@utils/winston";
 import ENV from "@config/env";
 import Router from "./router";
-import main from "@/seeders/seed";
+// import main from "@/seeders/seed";
 
 (async () => {
     const App = await AppPromise;
-    await main();
+    // await main();
     // Define a route
     App.use("/", Router);
     // Start the server

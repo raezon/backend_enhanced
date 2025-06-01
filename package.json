@@ -11,7 +11,10 @@
         "dev": "nodemon src/app.ts",
         "build": "npx tsc --project tsconfig.json && npx tsc-alias -p tsconfig.json",
         "format": "prettier --write .",
-        "prepare": "npx husky"
+        "prepare": "npx husky",
+        "db:migrate": "npx prisma migrate dev",
+        "db:studio": "npx prisma studio",
+        "db:reset": "npx prisma migrate reset"
     },
     "repository": {
         "type": "git",
