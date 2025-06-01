@@ -1,34 +1,17 @@
 import prisma from "@/config/prisma";
-import { Visa } from "@prisma/client";
-
-interface CreateVisaDTO {
-    countryId: string;
-    name: string;
-    price: number;
-    currency: string;
-    description: string;
-    conditions: string;
-    status: boolean;
-    duration: string;
-}
-
+import { Visa, Prisma } from "@prisma/client";
 
 export const visaRepo = {
-    createVisa: async (data: CreateVisaDTO): Promise<Visa> => {
-        return prisma.visa.create({
-            data,
-        });
+    createVisa: async (data: Prisma.VisaCreateInput): Promise<Visa> => {
+        return prisma.visa.create({ data });
     },
     getVisaById: async ({ id }: { id: string }): Promise<Visa | null> => {
-        return prisma.visa.findFirst({
+        return prisma.visa.findUnique({
             where: { id, deletedAt: null },
         });
     },
 
-    updateVisa: async (
-        id: string,
-        data: Partial<Omit<CreateVisaDTO, "countryId">>
-    ): Promise<Visa> => {
+    updateVisa: async (id: string, data: Partial<Prisma.VisaCreateInput>): Promise<Visa> => {
         return prisma.visa.update({
             where: { id },
             data,
@@ -36,14 +19,21 @@ export const visaRepo = {
     },
 
     deleteVisa: async (id: string): Promise<Visa> => {
-        // If using soft delete:
         return prisma.visa.update({
             where: { id },
             data: { deletedAt: new Date() },
         });
     },
 
-    findAllVisas: async ({ page, pageSize ,countryId}: { page: number; pageSize: number, countryId?:string }) => {
+    findAllVisas: async ({
+        page,
+        pageSize,
+        countryId,
+    }: {
+        page: number;
+        pageSize: number;
+        countryId?: string;
+    }) => {
         return prisma.visa.findMany({
             where: {
                 countryId: countryId ? countryId : {},
@@ -63,7 +53,6 @@ export const visaRepo = {
                 conditions: true,
                 duration: true,
             },
-
         });
-    }
-}
+    },
+};
