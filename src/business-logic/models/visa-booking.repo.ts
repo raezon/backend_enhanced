@@ -100,30 +100,8 @@ export const visaBookingRepo = {
         });
     },
     getVisaBookingById: async (id: string) => {
-        return prisma.visaRequestPivot.findUnique({
+        return prisma.visaRequest.findUnique({
             where: { id },
-            select: {
-                id: true,
-                visa: {
-                    select: {
-                        country: true,
-                        name: true,
-                    },
-                },
-                visaRequest: {
-                    select: {
-                        id: true,
-                        travelStartingDate: true,
-                        groupSize: true,
-                        status: true,
-                        nationality: true,
-                        totalPrice: true,
-                        agencyName: true,
-                        agentName: true,
-                        notes: true,
-                    },
-                },
-            },
         });
     },
 };
