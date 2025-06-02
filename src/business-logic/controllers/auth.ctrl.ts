@@ -32,10 +32,9 @@ export const AuthController = {
                 "Password is incorrect"
             );
         }
-        const { password: _, updatedAt, address, agency, ...user } = isUser;
 
-        const accessToken = TokenService.generateToken({ id: user.id }, user.role, "30d");
-        const refreshToken = TokenService.generateToken({ id: user.id }, user.role, "30d");
+        const accessToken = TokenService.generateToken({ id: isUser.id }, isUser.role, "30d");
+        const refreshToken = TokenService.generateToken({ id: isUser.id }, isUser.role, "30d");
 
         res.cookie(ENV.REFRESH_HIDEOUT, `${ENV.REFRESH_BEARER} ${refreshToken}`, {
             httpOnly: true,
@@ -47,7 +46,7 @@ export const AuthController = {
         });
         res.status(200).json({
             message: "User signed in successfully",
-            data: { ...user, accessToken },
+            data: { accessToken },
         });
     }),
 
