@@ -1,9 +1,35 @@
 import { PrismaClient } from "@prisma/client";
 import * as bcrypt from "bcrypt";
+import { flags } from "./countries";
 
 const prisma = new PrismaClient();
 const resources = ["user", "hotel", "agency", "role", "auth", "permission"];
 const actions = ["create", "read", "update", "delete"];
+
+
+async function seedCountries() {
+    console.log("Starting country seeding...");
+
+    for (const country of flags) {
+        const existingCountry = await prisma.country.findUnique({
+            where: { name: country.key },
+        });
+
+        if (!existingCountry) {
+            await prisma.country.create({
+                data: {
+                    name: country.key,
+                    flagUrl: country.val,
+                },
+            });
+            console.log(`Created country: ${country.key}`);
+        } else {
+            console.log(`Country already exists: ${country.key}`);
+        }
+    }
+
+    console.log("Country seeding completed!");
+}
 
 async function seedPermissions() {
     for (const resource of resources) {
@@ -29,7 +55,10 @@ async function seedPermissions() {
 }
 
 async function main() {
+    console.log("Starting seed process...");
+
     await seedPermissions();
+    await seedCountries(); // Add country seeding here
 
     // Check if 'all:*' permission exists
     let allPermission = await prisma.permission.findUnique({
@@ -45,10 +74,12 @@ async function main() {
             },
         });
     }
+
     // check role superAdmin exist
     let existingRole = await prisma.role.findUnique({
         where: { name: "superadmin" },
     });
+
     if (!existingRole) {
         existingRole = await prisma.role.create({
             data: {
@@ -93,6 +124,8 @@ async function main() {
     } else {
         console.log("SuperAdmin user already exists.");
     }
+
+    console.log("Seed process completed successfully!");
 }
 
 export default main;

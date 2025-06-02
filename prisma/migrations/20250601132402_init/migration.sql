@@ -174,15 +174,7 @@ CREATE TABLE "UserRole" (
 CREATE TABLE "Country" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "embassyLocation" TEXT NOT NULL,
     "flagUrl" TEXT NOT NULL,
-    "embassyWebsite" TEXT,
-    "embassyPhone" TEXT,
-    "embassyEmail" TEXT,
-    "embassyFax" TEXT,
-    "embassyHours" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Country_pkey" PRIMARY KEY ("id")
 );

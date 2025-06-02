@@ -193,17 +193,7 @@ model UserRole {
 model Country {
   id              String   @id @default(uuid())
   name            String   @unique
-  embassyLocation String
   flagUrl         String
-  embassyWebsite  String?
-  embassyPhone    String?
-  embassyEmail    String?
-  embassyFax      String?
-embassyHours    String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  // relations
   visa           Visa[]
 }
 

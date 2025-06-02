@@ -1,40 +1,14 @@
 import prisma from "@config/prisma";
+import { Prisma } from "@prisma/client";
 
 export const visaBookingRepo = {
-    createVisaBooking:async(data:{
-        visaId: string;
-        agentName: string;
-        agencyName: string;
-        travelStartingDate: string; // ISO date string
-        groupSize: number;
-        documents: string[];
-        nationality: string;
-        totalPrice: string; // e.g. "200000 DA"
-    })=>{
-        const {visaId , ...rest} = data;
-        const result = await prisma.$transaction(async (tx) => {
-            const createdVisaRequest = await tx.visaRequest.create({
-                data: {
-                    ...rest,
-                },
-                select: {
-                    id: true,
-                },
-            });
-            const visaRequestPivot = await tx.visaRequestPivot.create({
-                data: {
-                    visaId,
-                    visaRequestId: createdVisaRequest.id,
-                },
-            });
-
-            return createdVisaRequest.id;
+    createVisaBooking: async (data: Prisma.VisaRequestCreateInput) => {
+        return prisma.visaRequest.create({
+            data,
         });
-
-        return result;
     },
 
-    getAllVisaBookings:async({page , limit}:{page: number, limit: number}) =>{
+    getAllVisaBookings: async ({ page, limit }: { page: number; limit: number }) => {
         const skip = (page - 1) * limit;
         const data = await prisma.visaRequestPivot.findMany({
             skip,
@@ -63,7 +37,6 @@ export const visaBookingRepo = {
             },
         });
 
-
         return data.map((item) => ({
             id: item.visaRequest.id,
             agencyName: item.visaRequest.agencyName,
@@ -78,26 +51,28 @@ export const visaBookingRepo = {
             updatedAt: item.visaRequest.updatedAt,
         }));
     },
-    updateVisaBookingById:async(data: {
-        travelStartingDate: string; // format: MM/DD/YYYY
-        status: 'Processing' | 'Approved' | 'Rejected' | string;
-        nationality: string;
-        notes: string;
-    } , id:string)=>{
+    updateVisaBookingById: async (
+        data: {
+            travelStartingDate: string; // format: MM/DD/YYYY
+            status: "Processing" | "Approved" | "Rejected" | string;
+            nationality: string;
+            notes: string;
+        },
+        id: string
+    ) => {
         const { status, ...rest } = data;
         const updateRequest = await prisma.visaRequest.update({
             where: { id },
             data: {
                 ...rest,
                 status,
-                startedAt: status === 'Processing' ? new Date() : undefined,
-                confirmedAt:
-                    status === 'Done' || 'Cancelled' ? new Date() : undefined,
+                startedAt: status === "Processing" ? new Date() : undefined,
+                confirmedAt: status === "Done" || "Cancelled" ? new Date() : undefined,
             },
         });
     },
 
-    deleteVisaBookingById:async(id:string)=>{
+    deleteVisaBookingById: async (id: string) => {
         await prisma.visaRequest.update({
             where: { id },
             data: {
@@ -105,7 +80,7 @@ export const visaBookingRepo = {
             },
         });
     },
-    getVisaBookingById:async(id:string)=>{
+    getVisaBookingById: async (id: string) => {
         return prisma.visaRequestPivot.findUnique({
             where: { id },
             select: {
@@ -131,6 +106,5 @@ export const visaBookingRepo = {
                 },
             },
         });
-
-    }
-}
+    },
+};
