@@ -1,5 +1,21 @@
 import prisma from "@/config/prisma";
 import { Prisma } from "@prisma/client";
+import path from "path";
+import fs from "fs/promises";
+
+// Get upload path from environment or use default
+const UPLOAD_PATH = process.env.UPLOAD_PATH || path.join(process.cwd(), "uploads/documents");
+
+// Utility function to delete files safely
+const safeUnlink = async (filePath: string) => {
+    try {
+        const fullPath = path.join(UPLOAD_PATH, filePath);
+        await fs.unlink(fullPath);
+    } catch (err) {
+        console.error(`Failed to delete file: ${filePath}`, err);
+    }
+};
+
 
 export const passengerRepo = {
     visaRequestExists: async (id: string) => {
@@ -17,37 +33,41 @@ export const passengerRepo = {
         files: Express.Multer.File[];
         visaRequestId: string;
     } & Omit<Prisma.PassengerCreateInput, "visaRequest" | "passengerDocuments">) => {
-        const result = await prisma.$transaction(async (tx) => {
-            const passenger = await tx.passenger.create({
-                data: {
-                    ...passengerData,
-                    visaRequest: {
-                        connect: { id: visaRequestId },
+        try {
+            const result = await prisma.$transaction(async (tx) => {
+                const passenger = await tx.passenger.create({
+                    data: {
+                        ...passengerData,
+                        visaRequest: { connect: { id: visaRequestId } },
                     },
-                },
+                });
+
+                for (const file of files) {
+                    // Store only filename, not full path
+                    const savedFile = await tx.passengerDocumentsFiles.create({
+                        data: {
+                            filePath: file.filename, // Use sanitized filename
+                            fileType: file.mimetype,
+                            name: file.originalname,
+                        },
+                    });
+
+                    await tx.passengerDocuments.create({
+                        data: {
+                            passengerId: passenger.id,
+                            documentId: savedFile.id,
+                        },
+                    });
+                }
+
+                return passenger;
             });
-
-            for (const file of files) {
-                const savedFile = await tx.passengerDocumentsFiles.create({
-                    data: {
-                        filePath: file.path,
-                        fileType: file.mimetype,
-                        name: file.originalname,
-                    },
-                });
-
-                await tx.passengerDocuments.create({
-                    data: {
-                        passengerId: passenger.id,
-                        documentId: savedFile.id,
-                    },
-                });
-            }
-
-            return passenger;
-        });
-
-        return result;
+            return result;
+        } catch (error) {
+            // Clean up uploaded files on error
+            await Promise.all(files.map((file) => safeUnlink(file.filename)));
+            throw error;
+        }
     },
 
     findById: async (id: string) => {

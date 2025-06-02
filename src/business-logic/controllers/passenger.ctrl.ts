@@ -10,7 +10,16 @@ export const PassengerController = {
             body: req.body,
             files: req.files,
         });
+        if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
+            throw new ConstraintError(
+                "No documents uploaded",
+                400,
+                "MISSING_DOCUMENTS",
+                "At least one document is required"
+            );
+        }
 
+        const files = req.files as Express.Multer.File[];
         const { visaRequestId, ...inputData } = req.body;
         console.log("Extracted visaRequestId:", visaRequestId);
         console.log("Extracted inputData:", inputData);
@@ -68,12 +77,6 @@ export const PassengerController = {
                 );
             }
         }
-
-        const files = (req.files as Express.Multer.File[]) || [];
-        console.log(
-            "Files received:",
-            files.map((f) => f.originalname)
-        );
 
         console.log("Calling passengerRepo.create with data...");
         const data = await passengerRepo.create({
