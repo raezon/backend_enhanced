@@ -6,7 +6,14 @@ import { passengerRepo } from "../models/passengers.repo";
 
 export const PassengerController = {
     createPassenger: TryCatchBlock(async (req: Request, res: Response) => {
+        console.log("Incoming request to create passenger:", {
+            body: req.body,
+            files: req.files,
+        });
+
         const { visaRequestId, ...inputData } = req.body;
+        console.log("Extracted visaRequestId:", visaRequestId);
+        console.log("Extracted inputData:", inputData);
 
         if (
             !visaRequestId ||
@@ -14,6 +21,7 @@ export const PassengerController = {
             visaRequestId.trim() === "" ||
             !isValidUuid(visaRequestId)
         ) {
+            console.error("Visa Request ID validation failed:", visaRequestId);
             throw new ConstraintError(
                 "Visa Request ID validation failed",
                 400,
@@ -22,8 +30,12 @@ export const PassengerController = {
             );
         }
 
+        console.log("Checking if Visa Request exists with ID:", visaRequestId);
         const visaRequestExists = await passengerRepo.visaRequestExists(visaRequestId);
+        console.log("Visa Request existence check result:", visaRequestExists);
+
         if (!visaRequestExists) {
+            console.error(`Visa Request with ID ${visaRequestId} not found`);
             throw new ConstraintError(
                 "Visa Request not found",
                 404,
@@ -44,8 +56,10 @@ export const PassengerController = {
             "phone",
         ];
 
+        console.log("Validating required fields...");
         for (const field of requiredFields) {
             if (!inputData[field]) {
+                console.error(`Missing required field: ${field}`);
                 throw new ConstraintError(
                     "Missing required field",
                     400,
@@ -56,12 +70,19 @@ export const PassengerController = {
         }
 
         const files = (req.files as Express.Multer.File[]) || [];
+        console.log(
+            "Files received:",
+            files.map((f) => f.originalname)
+        );
 
+        console.log("Calling passengerRepo.create with data...");
         const data = await passengerRepo.create({
             visaRequestId,
             files,
             ...inputData,
         });
+
+        console.log("Passenger creation successful:", data);
 
         res.status(201).json({
             message: "Passenger created successfully",
