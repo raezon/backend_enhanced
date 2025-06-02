@@ -97,7 +97,7 @@ export const visaBookingController = {
             );
         }
 
-        const data = await visaBookingRepo.getVisaBookingById(id);
+        const data = await visaBookingRepo.getVisaBookingById(id.trim());
         console.log("data", data);
 
         if (!data) {
