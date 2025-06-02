@@ -102,6 +102,10 @@ export const visaBookingRepo = {
     getVisaBookingById: async (id: string) => {
         return prisma.visaRequest.findUnique({
             where: { id },
+            include: {
+                passengers: true,
+                viseRequestPivot: true,
+            },
         });
     },
 };
