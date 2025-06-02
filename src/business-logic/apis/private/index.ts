@@ -9,7 +9,8 @@ import {
     visaRoutes,
     agencyRoutes,
     bookingVisaRoutes,
-    countryRoutes
+    countryRoutes,
+    passengersRoutes,
 } from "./routes";
 const router = Router();
 
@@ -23,5 +24,6 @@ router.use("/service-fees", serviceFeesRoutes);
 router.use("/agency", agencyRoutes);
 router.use("/visa-bookings", bookingVisaRoutes);
 router.use("/country", countryRoutes);
+router.use("/passengers", passengersRoutes);
 
 export default router;

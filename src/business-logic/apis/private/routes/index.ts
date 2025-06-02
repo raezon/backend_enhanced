@@ -8,3 +8,4 @@ export { default as serviceFeesRoutes } from "./service-fees";
 export { default as agencyRoutes } from "./agency";
 export { default as bookingVisaRoutes } from "./booking-visa";
 export { default as countryRoutes } from "./country";
+export { default as passengersRoutes } from "./passenger";

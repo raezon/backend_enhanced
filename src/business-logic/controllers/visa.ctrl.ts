@@ -8,7 +8,7 @@ import { countryRepo } from "../models/country.repo";
 
 export const visaCtrl = {
     createNewVisa: TryCatchBlock(async (req: Request, res: Response) => {
-        const { countryId } = req.body;
+        const { countryId, ...inputData } = req.body;
 
         if (
             !countryId ||
@@ -56,7 +56,7 @@ export const visaCtrl = {
         }
 
         const createInput: Prisma.VisaCreateInput = {
-            ...req.body,
+            ...inputData,
             country: {
                 connect: { id: countryId },
             },

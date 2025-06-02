@@ -6,7 +6,6 @@ export const TryCatchBlock = (fn: RequestHandler): RequestHandler => {
         try {
             await fn(req, res, next);
         } catch (error: unknown) {
-
             console.log("Error caught in TryCatchBlock:", error);
 
             if (error instanceof ConstraintError) {
