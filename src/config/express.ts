@@ -13,36 +13,36 @@ import cookieParser from "cookie-parser";
 const createApp = async (): Promise<Application> => {
     const App: Application = express();
 
-    if (ENV.NODE_ENV !== "test") {
-        try {
-            const redisInstance = await rateLimitRedis;
-            const redisClient: any = redisInstance?.client ?? {
-                sendCommand: () => Promise.resolve([]),
-            };
+    // if (ENV.NODE_ENV !== "test") {
+    //     try {
+    //         const redisInstance = await rateLimitRedis;
+    //         const redisClient: any = redisInstance?.client ?? {
+    //             sendCommand: () => Promise.resolve([]),
+    //         };
 
-            App.use(
-                rateLimit({
-                    windowMs: 60 * 1000,
-                    limit: 100,
-                    standardHeaders: "draft-8",
-                    legacyHeaders: true,
-                    store: new RedisStore({
-                        sendCommand: (...args: string[]) => redisClient.sendCommand(args),
-                    }),
-                    skip: (req, _res) => {
-                        return (
-                            req.method === "OPTIONS" ||
-                            req.path === "/api-docs" ||
-                            req.path === "/api-docs.json" ||
-                            req.path === "/health"
-                        );
-                    },
-                })
-            );
-        } catch (error) {
-            console.log("Skipping Redis rate limiting due to an error.");
-        }
-    }
+    //         App.use(
+    //             rateLimit({
+    //                 windowMs: 60 * 1000,
+    //                 limit: 100,
+    //                 standardHeaders: "draft-8",
+    //                 legacyHeaders: true,
+    //                 store: new RedisStore({
+    //                     sendCommand: (...args: string[]) => redisClient.sendCommand(args),
+    //                 }),
+    //                 skip: (req, _res) => {
+    //                     return (
+    //                         req.method === "OPTIONS" ||
+    //                         req.path === "/api-docs" ||
+    //                         req.path === "/api-docs.json" ||
+    //                         req.path === "/health"
+    //                     );
+    //                 },
+    //             })
+    //         );
+    //     } catch (error) {
+    //         console.log("Skipping Redis rate limiting due to an error.");
+    //     }
+    // }
 
     App.use(morgan(morganFormat, { stream: morganStream }));
     App.use(cookieParser());
