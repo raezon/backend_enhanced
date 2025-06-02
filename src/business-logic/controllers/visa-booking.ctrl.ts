@@ -86,6 +86,8 @@ export const visaBookingController = {
     getVisaBookingById: TryCatchBlock(async (req: Request, res: Response) => {
         const { id } = req.params;
 
+        console.log("id ", id);
+
         if (!isValidUuid(id)) {
             throw new ConstraintError(
                 "Invalid ID format",
@@ -96,8 +98,11 @@ export const visaBookingController = {
         }
 
         const data = await visaBookingRepo.getVisaBookingById(id);
+        console.log("data", data);
 
         if (!data) {
+            console.log("data", data);
+
             throw new ConstraintError(
                 "Booked Visa not found",
                 404,
