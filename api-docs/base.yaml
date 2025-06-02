@@ -15,6 +15,198 @@ tags:
     description: Hotel related operations (protected routes)
 
 paths:
+  /api/private/passengers:
+    post:
+      tags: [Passengers]
+      summary: Create a new passenger
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - visaRequestId
+                - name
+                - surname
+                - placeOfBirth
+                - dateOfBirth
+                - passportNumber
+                - passportDeliveryDate
+                - passportExpirationDate
+                - email
+                - phone
+              properties:
+                visaRequestId:
+                  type: string
+                  format: uuid
+                  description: ID of the associated visa request
+                name:
+                  type: string
+                  description: Passenger's first name
+                surname:
+                  type: string
+                  description: Passenger's last name
+                placeOfBirth:
+                  type: string
+                  description: City/country of birth
+                dateOfBirth:
+                  type: string
+                  format: date
+                  example: "1990-01-15"
+                passportNumber:
+                  type: string
+                  description: Passport identification number
+                passportDeliveryDate:
+                  type: string
+                  format: date
+                  example: "2020-05-20"
+                passportExpirationDate:
+                  type: string
+                  format: date
+                  example: "2030-05-19"
+                email:
+                  type: string
+                  format: email
+                phone:
+                  type: string
+                  description: Contact phone number
+                notes:
+                  type: string
+                  description: Additional notes/comments
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Passenger documents (PDF/JPEG/PNG)
+      responses:
+        201:
+          description: Passenger created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Passenger'
+        400:
+          description: Validation error
+        404:
+          description: Visa request not found
+
+  /passengers/{id}:
+    put:
+      tags: [Passengers]
+      summary: Update an existing passenger
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Updated first name
+                surname:
+                  type: string
+                  description: Updated last name
+                placeOfBirth:
+                  type: string
+                  description: Updated place of birth
+                dateOfBirth:
+                  type: string
+                  format: date
+                  example: "1990-01-15"
+                passportNumber:
+                  type: string
+                  description: Updated passport number
+                passportDeliveryDate:
+                  type: string
+                  format: date
+                  example: "2020-05-20"
+                passportExpirationDate:
+                  type: string
+                  format: date
+                  example: "2030-05-19"
+                email:
+                  type: string
+                  format: email
+                phone:
+                  type: string
+                  description: Updated phone number
+                notes:
+                  type: string
+                  description: Updated notes/comments
+                deletedDocs:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  description: IDs of documents to delete
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: New documents to upload
+      responses:
+        200:
+          description: Passenger updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Passenger'
+        400:
+          description: Invalid input or validation error
+        404:
+          description: Passenger not found
+
+    delete:
+      tags: [Passengers]
+      summary: Delete a passenger
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Passenger deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+        400:
+          description: Invalid passenger ID
+        404:
+          description: Passenger not found
   /api/public/auth/sign-in:
     post:
       tags:
@@ -2171,3 +2363,86 @@ components:
             details:
               type: string
               example: An unexpected error occurred
+    Passenger:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        visaRequestId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        surname:
+          type: string
+        placeOfBirth:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date-time
+        passportNumber:
+          type: string
+        passportDeliveryDate:
+          type: string
+          format: date-time
+        passportExpirationDate:
+          type: string
+          format: date-time
+        email:
+          type: string
+        phone:
+          type: string
+        notes:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        deletedAt:
+          type: string
+          format: date-time
+        passengerDocuments:
+          type: array
+          items:
+            $ref: '#/components/schemas/PassengerDocument'
+
+    PassengerDocument:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        passengerId:
+          type: string
+          format: uuid
+        documentId:
+          type: string
+          format: uuid
+        label:
+          type: string
+        isMandatory:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        passengerDocumentsFiles:
+          $ref: '#/components/schemas/DocumentFile'
+
+    DocumentFile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        filePath:
+          type: string
+        fileType:
+          type: string
+        name:
+          type: string
+        uploadedAt:
+          type: string
+          format: date-time

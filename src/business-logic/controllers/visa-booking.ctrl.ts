@@ -114,6 +114,16 @@ export const visaBookingController = {
 
     updateVisaBooking: TryCatchBlock(async (req: Request, res: Response) => {
         const { id } = req.params;
+
+        if (!isValidUuid(id)) {
+            throw new ConstraintError(
+                "Invalid ID format",
+                400,
+                "VALIDATION_ERROR",
+                "Visa ID must be a valid UUID"
+            );
+        }
+
         const data = await visaBookingRepo.updateVisaBookingById(req.body, id);
         res.status(200).json({
             message: "Visa booking updated successfully",

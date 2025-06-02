@@ -6,7 +6,7 @@ import { passengerRepo } from "../models/passengers.repo";
 
 export const PassengerController = {
     createPassenger: TryCatchBlock(async (req: Request, res: Response) => {
-        const { visaRequestId } = req.body;
+        const { visaRequestId, ...inputData } = req.body;
 
         if (
             !visaRequestId ||
@@ -15,26 +15,24 @@ export const PassengerController = {
             !isValidUuid(visaRequestId)
         ) {
             throw new ConstraintError(
-                "Country ID validation failed",
+                "Visa Request ID validation failed",
                 400,
                 "INVALID_INPUT",
-                "Country ID must be provided as a non-empty string"
+                "Visa Request ID must be a valid UUID string"
             );
         }
 
-        const visaRequest = await passengerRepo.visaRequestExists(visaRequestId);
-
-        if (!visaRequest) {
+        const visaRequestExists = await passengerRepo.visaRequestExists(visaRequestId);
+        if (!visaRequestExists) {
             throw new ConstraintError(
                 "Visa Request not found",
                 404,
                 "RESOURCE_NOT_FOUND",
-                `This Visa Request could not be found`
+                `Visa Request with ID ${visaRequestId} not found`
             );
         }
 
         const requiredFields = [
-            "visaRequestId",
             "name",
             "surname",
             "placeOfBirth",
@@ -47,23 +45,126 @@ export const PassengerController = {
         ];
 
         for (const field of requiredFields) {
-            if (!req.body[field]) {
+            if (!inputData[field]) {
                 throw new ConstraintError(
                     "Missing required field",
                     400,
                     "MISSING_REQUIRED_FIELD",
-                    `${field} is a required field`
+                    `${field} is required`
                 );
             }
         }
 
-        // transaction
+        const files = (req.files as Express.Multer.File[]) || [];
+
+        const data = await passengerRepo.create({
+            visaRequestId,
+            files,
+            ...inputData,
+        });
 
         res.status(201).json({
             message: "Passenger created successfully",
-            data: {},
+            data,
         });
     }),
-    updatePassenger: TryCatchBlock(async (req: Request, res: Response) => {}),
-    deletePassenger: TryCatchBlock(async (req: Request, res: Response) => {}),
+
+    updatePassenger: TryCatchBlock(async (req: Request, res: Response) => {
+        const passengerId = req.params.id;
+
+        // Validate passenger ID
+        if (!passengerId || !isValidUuid(passengerId)) {
+            throw new ConstraintError(
+                "Invalid Passenger ID",
+                400,
+                "INVALID_INPUT",
+                "Passenger ID must be a valid UUID"
+            );
+        }
+
+        // Check if passenger exists
+        const existingPassenger = await passengerRepo.findById(passengerId);
+        if (!existingPassenger) {
+            throw new ConstraintError(
+                "Passenger not found",
+                404,
+                "RESOURCE_NOT_FOUND",
+                `Passenger with ID ${passengerId} not found`
+            );
+        }
+
+        const { deletedDocs, ...updateData } = req.body;
+        const files = (req.files as Express.Multer.File[]) || [];
+
+        // Parse deletedDocs if provided
+        let parsedDeletedDocs: string[] = [];
+        if (deletedDocs) {
+            try {
+                parsedDeletedDocs = Array.isArray(deletedDocs)
+                    ? deletedDocs
+                    : JSON.parse(deletedDocs);
+            } catch (error) {
+                throw new ConstraintError(
+                    "Invalid deletedDocs format",
+                    400,
+                    "INVALID_INPUT",
+                    "deletedDocs must be a valid JSON array"
+                );
+            }
+        }
+
+        // Convert date strings to Date objects
+        const dateFields = ["dateOfBirth", "passportDeliveryDate", "passportExpirationDate"];
+
+        for (const field of dateFields) {
+            if (updateData[field]) {
+                updateData[field] = new Date(updateData[field]);
+            }
+        }
+
+        // Perform update
+        const updatedPassenger = await passengerRepo.update(passengerId, {
+            ...updateData,
+            files,
+            deletedDocs: parsedDeletedDocs,
+        });
+
+        res.status(200).json({
+            message: "Passenger updated successfully",
+            data: updatedPassenger,
+        });
+    }),
+
+    deletePassenger: TryCatchBlock(async (req: Request, res: Response) => {
+        const passengerId = req.params.id;
+
+        // Validate passenger ID
+        if (!passengerId || !isValidUuid(passengerId)) {
+            throw new ConstraintError(
+                "Invalid Passenger ID",
+                400,
+                "INVALID_INPUT",
+                "Passenger ID must be a valid UUID"
+            );
+        }
+
+        // Check if passenger exists
+        const existingPassenger = await passengerRepo.findById(passengerId);
+        if (!existingPassenger) {
+            throw new ConstraintError(
+                "Passenger not found",
+                404,
+                "RESOURCE_NOT_FOUND",
+                `Passenger with ID ${passengerId} not found`
+            );
+        }
+
+        // Perform deletion
+        await passengerRepo.delete(passengerId);
+
+        res.status(200).json({
+            message: "Passenger deleted successfully",
+            data: { id: passengerId },
+        });
+    }),
 };
