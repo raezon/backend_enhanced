@@ -94,10 +94,17 @@ export const PassengerController = {
     }),
 
     updatePassenger: TryCatchBlock(async (req: Request, res: Response) => {
+        console.log("Incoming request to update passenger:", {
+            params: req.params,
+            body: req.body,
+            files: req.files,
+        });
+
         const passengerId = req.params.id;
 
-        // Validate passenger ID
+        // 1) Validate passenger ID
         if (!passengerId || !isValidUuid(passengerId)) {
+            console.error("Invalid Passenger ID:", passengerId);
             throw new ConstraintError(
                 "Invalid Passenger ID",
                 400,
@@ -106,9 +113,10 @@ export const PassengerController = {
             );
         }
 
-        // Check if passenger exists
+        // 2) Check if passenger exists
         const existingPassenger = await passengerRepo.findById(passengerId);
         if (!existingPassenger) {
+            console.error(`Passenger with ID ${passengerId} not found`);
             throw new ConstraintError(
                 "Passenger not found",
                 404,
@@ -117,48 +125,69 @@ export const PassengerController = {
             );
         }
 
+        // 3) Destructure deletedDocs and collect incoming files
         const { deletedDocs, ...updateData } = req.body;
         const files = (req.files as Express.Multer.File[]) || [];
 
-        // Parse deletedDocs if provided
+        // 4) Parse deletedDocs if provided
         let parsedDeletedDocs: string[] = [];
         if (deletedDocs) {
             try {
                 parsedDeletedDocs = Array.isArray(deletedDocs)
-                    ? deletedDocs
-                    : JSON.parse(deletedDocs);
-            } catch (error) {
+                    ? (deletedDocs as string[])
+                    : JSON.parse(deletedDocs as string);
+            } catch (parseErr) {
+                console.error("Invalid deletedDocs format:", deletedDocs);
                 throw new ConstraintError(
                     "Invalid deletedDocs format",
                     400,
                     "INVALID_INPUT",
-                    "deletedDocs must be a valid JSON array"
+                    "deletedDocs must be a valid JSON array of document IDs"
                 );
             }
         }
 
-        // Convert date strings to Date objects
-        const dateFields = ["dateOfBirth", "passportDeliveryDate", "passportExpirationDate"];
+        // 5) If no new files and no deletedDocs, then there’s nothing to update
+        if (files.length === 0 && parsedDeletedDocs.length === 0) {
+            console.error("No files to add or delete provided for update");
+            throw new ConstraintError(
+                "Nothing to update",
+                400,
+                "MISSING_DOCUMENTS",
+                "You must provide at least one new file (documents) or a deletedDocs array"
+            );
+        }
 
+        // 6) Convert any date‐string fields in updateData into actual Date objects
+        const dateFields = ["dateOfBirth", "passportDeliveryDate", "passportExpirationDate"];
         for (const field of dateFields) {
             if (updateData[field]) {
-                updateData[field] = new Date(updateData[field]);
+                updateData[field] = new Date(updateData[field] as string);
             }
         }
 
-        // Perform update
+        // 7) Perform the update via the repo
+        console.log("Calling passengerRepo.update with:", {
+            passengerId,
+            updatePayload: {
+                ...updateData,
+                files,
+                deletedDocs: parsedDeletedDocs,
+            },
+        });
+
         const updatedPassenger = await passengerRepo.update(passengerId, {
             ...updateData,
             files,
             deletedDocs: parsedDeletedDocs,
         });
 
+        console.log("Passenger updated successfully:", updatedPassenger);
         res.status(200).json({
             message: "Passenger updated successfully",
             data: updatedPassenger,
         });
     }),
-
     deletePassenger: TryCatchBlock(async (req: Request, res: Response) => {
         const passengerId = req.params.id;
 
