@@ -1,5 +1,6 @@
 import prisma from "@config/prisma";
 import { Prisma } from "@prisma/client";
+import { passengerRepo } from "./passengers.repo";
 
 export const visaBookingRepo = {
     createVisaBooking: async (data: Prisma.VisaRequestCreateInput & { visaId: string }) => {
@@ -100,12 +101,32 @@ export const visaBookingRepo = {
         });
     },
     getVisaBookingById: async (id: string) => {
-        return prisma.visaRequest.findUnique({
+        const result = await prisma.visaRequestPivot.findUnique({
             where: { id },
-            include: {
-                passengers: true,
-                viseRequestPivot: true,
+            select: {
+                id: true,
+                visa: {
+                    select: {
+                        country: true,
+                        name: true,
+                    },
+                },
+                visaRequest: {
+                    select: {
+                        id: true,
+                        travelStartingDate: true,
+                        groupSize: true,
+                        status: true,
+                        nationality: true,
+                        totalPrice: true,
+                        agencyName: true,
+                        agentName: true,
+                        notes: true,
+                    },
+                },
             },
         });
+
+        return result;
     },
 };

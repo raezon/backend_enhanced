@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import { visaBookingRepo } from "@business/models/visa-booking.repo";
 import { validate as isValidUuid } from "uuid";
 import { ConstraintError } from "../app/base/constraint-error";
+import { passengerRepo } from "../models/passengers.repo";
 
 export const visaBookingController = {
     requestVisa: TryCatchBlock(async (req: Request, res: Response) => {
@@ -98,11 +99,8 @@ export const visaBookingController = {
         }
 
         const data = await visaBookingRepo.getVisaBookingById(id.trim());
-        console.log("data", data);
 
         if (!data) {
-            console.log("data", data);
-
             throw new ConstraintError(
                 "Booked Visa not found",
                 404,
@@ -111,9 +109,26 @@ export const visaBookingController = {
             );
         }
 
+        const passengers = await passengerRepo.findAll(data.visaRequest.id);
+
         res.status(200).json({
             message: "Visa booking retrieved successfully",
-            data,
+            data: {
+                basicInfos: {
+                    id: data.id,
+                    country: data.visa.country,
+                    travelStartingDate: data.visaRequest.travelStartingDate,
+                    groupSize: data.visaRequest.groupSize,
+                    status: data.visaRequest.status,
+                    nationality: data.visaRequest.nationality,
+                    totalPrice: data.visaRequest.totalPrice,
+                    agencyName: data.visaRequest.agencyName,
+                    agentName: data.visaRequest.agentName,
+                    name: data.visa.name,
+                    notes: data.visaRequest.notes,
+                },
+                passengers,
+            },
         });
     }),
 
