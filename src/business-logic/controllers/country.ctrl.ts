@@ -7,7 +7,15 @@ export const countryController = {
         const data = await countryRepo.findAll();
         res.status(200).json({
             data,
-            message: "Successfully created country",
+            message: "Successfully got all countries",
+        });
+    }),
+
+    getAllCountriesWithVisa: TryCatchBlock(async (_req: Request, res: Response) => {
+        const data = await countryRepo.findAllWithValidVisa();
+        res.status(200).json({
+            data,
+            message: "Successfully got all countries who has visa",
         });
     }),
 };

@@ -29,4 +29,17 @@ export const countryRepo = {
     update: async (data: Partial<Prisma.CountryCreateInput>, id: string) => {
         return prisma.country.update({ where: { id }, data: data });
     },
+
+    findAllWithValidVisa: async () => {
+        return prisma.country.findMany({
+            where: {
+                visa: {
+                    some: {}, // means at least one visa
+                },
+            },
+            include: {
+                visa: true, // include visa data if needed
+            },
+        });
+    },
 };
