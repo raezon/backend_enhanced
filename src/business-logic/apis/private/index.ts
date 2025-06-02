@@ -12,7 +12,6 @@ import {
     countryRoutes,
     passengersRoutes,
 } from "./routes";
-import upload, { fileUploadMiddleware } from "@/config/multer";
 const router = Router();
 
 router.use("/client", clientRoutes);
@@ -25,6 +24,6 @@ router.use("/service-fees", serviceFeesRoutes);
 router.use("/agency", agencyRoutes);
 router.use("/visa-bookings", bookingVisaRoutes);
 router.use("/country", countryRoutes);
-router.use("/passengers", fileUploadMiddleware, passengersRoutes);
+router.use("/passengers", passengersRoutes);
 
 export default router;
