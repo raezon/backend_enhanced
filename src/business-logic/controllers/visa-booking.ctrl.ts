@@ -3,7 +3,6 @@ import { Request, Response } from "express";
 import { visaBookingRepo } from "@business/models/visa-booking.repo";
 import { validate as isValidUuid } from "uuid";
 import { ConstraintError } from "../app/base/constraint-error";
-import { Prisma } from "@prisma/client";
 
 export const visaBookingController = {
     requestVisa: TryCatchBlock(async (req: Request, res: Response) => {
@@ -43,7 +42,7 @@ export const visaBookingController = {
             throw new ConstraintError(
                 "Invalid group size",
                 400,
-                "INVALID_GROUP_SIZE",
+                "VALIDATION_ERROR",
                 "Group size must be a positive integer"
             );
         }
@@ -61,15 +60,8 @@ export const visaBookingController = {
         const documentFiles = (req.files as Express.Multer.File[]) || [];
         const documentPaths = documentFiles.map((file) => file.path);
 
-        const createInput: Prisma.VisaRequestCreateInput = {
-            ...req.body,
-            country: {
-                connect: { id: visaId },
-            },
-        };
-
         const data = await visaBookingRepo.createVisaBooking({
-            ...createInput,
+            ...req.body,
             documents: documentPaths,
         });
 

@@ -2,10 +2,29 @@ import prisma from "@config/prisma";
 import { Prisma } from "@prisma/client";
 
 export const visaBookingRepo = {
-    createVisaBooking: async (data: Prisma.VisaRequestCreateInput) => {
-        return prisma.visaRequest.create({
-            data,
+    createVisaBooking: async (data: Prisma.VisaRequestCreateInput & { visaId: string }) => {
+        const { visaId, ...rest } = data;
+
+        const result = await prisma.$transaction(async (tx) => {
+            const createdVisaRequest = await tx.visaRequest.create({
+                data: {
+                    ...rest,
+                },
+                select: {
+                    id: true,
+                },
+            });
+            await tx.visaRequestPivot.create({
+                data: {
+                    visaId,
+                    visaRequestId: createdVisaRequest.id,
+                },
+            });
+
+            return createdVisaRequest.id;
         });
+
+        return result;
     },
 
     getAllVisaBookings: async ({ page, limit }: { page: number; limit: number }) => {
