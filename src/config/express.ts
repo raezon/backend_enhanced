@@ -44,6 +44,29 @@ const createApp = async (): Promise<Application> => {
         }
     }
 
+    const isCorsAllowed = (origin: string | undefined) => {
+        // Always allow requests with no origin (mobile apps, Postman, etc.)
+        if (!origin) return true;
+
+        // Allow localhost and 127.0.0.1 in any environment
+        if (origin.includes("localhost") || origin.includes("127.0.0.1")) {
+            return true;
+        }
+
+        // 👇 Modified: Allow all origins in development environment
+        if (ENV.NODE_ENV === "development") {
+            return true;
+        }
+
+        // Production allowed origins
+        const allowedOrigins = [
+            "https://your-production-domain.com",
+            "https://your-staging-domain.com",
+        ];
+
+        return allowedOrigins.includes(origin);
+    };
+
     App.use(morgan(morganFormat, { stream: morganStream }));
     App.use(cookieParser());
     App.use(express.urlencoded({ extended: true }));
@@ -52,35 +75,19 @@ const createApp = async (): Promise<Application> => {
     App.use(helmet());
     App.use(
         cors({
-            origin: function (origin, callback) {
-                // Allow requests with no origin (mobile apps, Postman, etc.)
-                if (!origin) return callback(null, true);
-
-                // Allow localhost for development
-                if (origin.includes("localhost") || origin.includes("127.0.0.1")) {
-                    return callback(null, true);
+            origin: (origin, callback) => {
+                // 👇 Use the helper function
+                if (isCorsAllowed(origin)) {
+                    callback(null, true);
+                } else {
+                    callback(new Error("Not allowed by CORS"));
                 }
-
-                // Add your production frontend domains here
-                const allowedOrigins = [
-                    "https://your-production-domain.com",
-                    "https://your-staging-domain.com",
-                ];
-
-                if (allowedOrigins.includes(origin)) {
-                    return callback(null, true);
-                }
-
-                // For development, you might want to allow all origins temporarily
-                if (ENV.NODE_ENV === "development") {
-                    return callback(null, true);
-                }
-
-                callback(new Error("Not allowed by CORS"));
             },
             credentials: true,
             allowedHeaders: [ENV.TOKEN_HIDEOUT, "Content-Type", "Authorization"],
             methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            // 👇 Add this to fix preflight issues
+            maxAge: 86400, // 24-hour cache for OPTIONS preflight
         })
     );
 
