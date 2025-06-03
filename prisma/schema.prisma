@@ -88,9 +88,6 @@ model Logo {
 
 model Accounting {
   id                                     String       @id @default(uuid())
-  localCurrency                          String       
-  localDepositBalance                    Float        @default(0)
-  agencyCommissionHotel                  Float
   agencyCommissionLowCoTick              Float   
   hideEtickectPrice                      Boolean     @default(false)
   hideHotelVoucherPrice                  Boolean     @default(false)

@@ -26,7 +26,6 @@ export const agencyRepo = {
                 phoneNum1: true,
                 agencyAddress: true,
                 activated: true,
-                accounting: { select: { localDepositBalance: true } },
                 authoration: { select: { localAutherizedOverdraw: true } },
             },
         });

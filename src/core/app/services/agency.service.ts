@@ -91,9 +91,6 @@ export const AgencyService = {
         }
 
         const requiredFields = [
-            "localCurrency",
-            "localDepositBalance",
-            "agencyCommissionHotel",
             "agencyCommissionLowCoTick",
             "hideEtickectPrice",
             "hideHotelVoucherPrice",
