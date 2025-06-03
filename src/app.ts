@@ -2,6 +2,8 @@ import AppPromise from "@config/express";
 import winston from "@utils/winston";
 import ENV from "@config/env";
 import Router from "./router";
+import apiLogger from "./scripts/api-logger";
+import { Env } from "./config";
 // import main from "@/seeders/seed";
 
 (async () => {
@@ -16,6 +18,7 @@ import Router from "./router";
         });
     }
 
+    apiLogger(App, Env.PORT);
     App.on("SIGINT", () => {
         winston.error(`Server off, SIGINT`);
         process.exit();

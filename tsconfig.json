@@ -19,7 +19,10 @@
             "@config/*": ["src/config/*"],
             "@utils/*": ["src/utils/*"],
             "@types/*": ["src/types/*"],
-            "@business/*": ["src/business-logic/*"]
+            "@core/*": ["src/core/*"],
+            "@api/*": ["src/api/*"],
+            "@scripts/*": ["src/scripts/*"],
+            "@middlewares/*": ["src/middlewares/*"]
         },
         "types": ["node", "jest"]
     },

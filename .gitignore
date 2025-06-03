@@ -137,3 +137,6 @@ dist
 
 # idea
 .idea
+
+generate.sh
+business-logic

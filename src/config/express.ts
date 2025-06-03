@@ -2,7 +2,7 @@ import { morganFormat, morganStream } from "@config/morgan";
 import express, { Application } from "express";
 import { RedisStore } from "rate-limit-redis";
 import rateLimit from "express-rate-limit";
-import { rateLimitRedis } from "./redis";
+import { rateLimitRedis } from "./rate-limit";
 import { setupSwagger } from "./swagger";
 import helmet from "helmet";
 import morgan from "morgan";

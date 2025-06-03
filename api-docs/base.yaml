@@ -1,2448 +1,379 @@
 openapi: 3.0.3
 info:
-  title: ISO Voyage API docs
-  version: 1.0.0-beta
-  description: This is ISO Voyage APIs for the latest version 1.0.0
-
+    title: User API
+    version: 1.0.0
 tags:
-  - name: Auth
-    description: Authentication related operations
-  - name: Client
-    description: Client related operations (protected routes)
-  - name: User
-    description: User related operations (protected routes)
-  - name: Hotel
-    description: Hotel related operations (protected routes)
+    - name: auth
+      description: Auth-related operations
+    - name: user
+      description: User-related operations
 
 paths:
-  /api/private/passengers:
-    post:
-      tags: [Passengers]
-      summary: Create a new passenger
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              required:
-                - visaRequestId
-                - name
-                - surname
-                - placeOfBirth
-                - dateOfBirth
-                - passportNumber
-                - passportDeliveryDate
-                - passportExpirationDate
-                - email
-                - phone
-              properties:
-                visaRequestId:
-                  type: string
-                  format: uuid
-                  description: ID of the associated visa request
-                name:
-                  type: string
-                  description: Passenger's first name
-                surname:
-                  type: string
-                  description: Passenger's last name
-                placeOfBirth:
-                  type: string
-                  description: City/country of birth
-                dateOfBirth:
-                  type: string
-                  format: date
-                  example: "1990-01-15"
-                passportNumber:
-                  type: string
-                  description: Passport identification number
-                passportDeliveryDate:
-                  type: string
-                  format: date
-                  example: "2020-05-20"
-                passportExpirationDate:
-                  type: string
-                  format: date
-                  example: "2030-05-19"
-                email:
-                  type: string
-                  format: email
-                phone:
-                  type: string
-                  description: Contact phone number
-                notes:
-                  type: string
-                  description: Additional notes/comments
-                files:
-                  type: array
-                  items:
-                    type: string
-                    format: binary
-                  description: Passenger documents (PDF/JPEG/PNG)
-      responses:
-        201:
-          description: Passenger created successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  data:
-                    $ref: '#/components/schemas/Passenger'
-        400:
-          description: Validation error
-        404:
-          description: Visa request not found
-
-  /passengers/{id}:
-    put:
-      tags: [Passengers]
-      summary: Update an existing passenger
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  description: Updated first name
-                surname:
-                  type: string
-                  description: Updated last name
-                placeOfBirth:
-                  type: string
-                  description: Updated place of birth
-                dateOfBirth:
-                  type: string
-                  format: date
-                  example: "1990-01-15"
-                passportNumber:
-                  type: string
-                  description: Updated passport number
-                passportDeliveryDate:
-                  type: string
-                  format: date
-                  example: "2020-05-20"
-                passportExpirationDate:
-                  type: string
-                  format: date
-                  example: "2030-05-19"
-                email:
-                  type: string
-                  format: email
-                phone:
-                  type: string
-                  description: Updated phone number
-                notes:
-                  type: string
-                  description: Updated notes/comments
-                deletedDocs:
-                  type: array
-                  items:
-                    type: string
-                    format: uuid
-                  description: IDs of documents to delete
-                files:
-                  type: array
-                  items:
-                    type: string
-                    format: binary
-                  description: New documents to upload
-      responses:
-        200:
-          description: Passenger updated successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  data:
-                    $ref: '#/components/schemas/Passenger'
-        400:
-          description: Invalid input or validation error
-        404:
-          description: Passenger not found
-
-    delete:
-      tags: [Passengers]
-      summary: Delete a passenger
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        200:
-          description: Passenger deleted successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  data:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        format: uuid
-        400:
-          description: Invalid passenger ID
-        404:
-          description: Passenger not found
-  /api/public/auth/sign-in:
-    post:
-      tags:
-        - Auth
-      summary: Sign in user and return access token
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - username
-                - password
-              properties:
-                username:
-                  type: string
-                  example: johndoe
-                password:
-                  type: string
-                  example: securepassword123
-      responses:
-        '200':
-          description: User signed in successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: User signed in successfully
-                  data:
-                    type: object
-                    properties:
-                      accessToken:
-                        type: string
-                        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-                      username:
-                        type: string
-                      id:
-                        type: string
-                      firstName:
-                        type: string
-                      lastName:
-                        type: string
-                      email:
-                        type: string
-                      role:
-                        type: string
-                      phoneNumber:
-                        type: string
-                      userActive:
-                        type: boolean
-                      adminActive:
-                        type: boolean
-                      createdAt:
-                        type: string
-                        format: date-time
-        '400':
-          description: Validation error (e.g., incorrect password)
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: Validation error
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: VALIDATION_ERROR
-                      details:
-                        type: string
-                        example: Password is incorrect
-        '404':
-          description: User not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: user not found
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: USER_NOT_FOUND
-                      details:
-                        type: string
-                        example: User does not exist
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: Internal Server Error
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: INTERNAL_SERVER_ERROR
-                      details:
-                        type: string
-                        example: An unexpected error occurred
-
-  /api/public/auth/refresh:
-    get:
-      tags:
-        - Auth
-      summary: Refresh the access token using the refresh token in cookies
-      responses:
-        '200':
-          description: Token refreshed successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: Token refreshed successfully
-                  data:
-                    type: object
-                    properties:
-                      accessToken:
-                        type: string
-                        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-        '403':
-          description: Invalid token format
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: Authentication failed
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: VALIDATION_ERROR
-                      details:
-                        type: string
-                        example: Invalid token format
-        '404':
-          description: User not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: Authentication failed
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: VALIDATION_ERROR
-                      details:
-                        type: string
-                        example: User not found
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: Internal Server Error
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: INTERNAL_SERVER_ERROR
-                      details:
-                        type: string
-                        example: An unexpected error occurred
-  /api/private/client/sign-out:
-    get:
-      tags:
-        - Client
-      summary: Sign out the currently logged-in user
-      responses:
-        '200':
-          description: User signed out successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: User signed out successfully
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: Internal Server Error
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: INTERNAL_SERVER_ERROR
-                      details:
-                        type: string
-                        example: An unexpected error occurred
-  /api/private/users:
-    post:
-      tags:
-        - User
-      summary: Create a new user
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - username
-                - password
-                - firstName
-                - lastName
-                - email
-                - role
-              properties:
-                username:
-                  type: string
-                password:
-                  type: string
-                firstName:
-                  type: string
-                lastName:
-                  type: string
-                email:
-                  type: string
-                role:
-                  type: string
-                phoneNumber:
-                  type: string
-                address:
-                  type: string
-                  nullable: true
-                agency:
-                  type: string
-                  nullable: true
-      responses:
-        '201':
-          description: User created successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: User created successfully
-                  data:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                      username:
-                        type: string
-                      password:
-                        type: string
-                      firstName:
-                        type: string
-                      lastName:
-                        type: string
-                      email:
-                        type: string
-                      role:
-                        type: string
-                      phoneNumber:
-                        type: string
-                      address:
-                        type: string
-                        nullable: true
-                      userActive:
-                        type: boolean
-                      adminActive:
-                        type: boolean
-                      createdAt:
-                        type: string
-                        format: date-time
-                      updatedAt:
-                        type: string
-                        format: date-time
-                      agency:
-                        type: string
-                        nullable: true
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ConstraintError'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: Internal Server Error
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: INTERNAL_SERVER_ERROR
-                      details:
-                        type: string
-                        example: An unexpected error occurred
-
-    get:
-      tags:
-        - User
-      summary: Get all users
-      parameters:
-        - in: query
-          name: page
-          schema:
-            type: integer
-        - in: query
-          name: limit
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Users retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: Users retrieved successfully
-                  data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                        username:
-                          type: string
-                        firstName:
-                          type: string
-                        lastName:
-                          type: string
-                        email:
-                          type: string
-                        role:
-                          type: string
-                        userActive:
-                          type: boolean
-                        adminActive:
-                          type: boolean
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: Internal Server Error
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: INTERNAL_SERVER_ERROR
-                      details:
-                        type: string
-                        example: An unexpected error occurred
-
-  /api/private/users/{id}:
-    get:
-      tags:
-        - User
-      summary: Get a user by ID
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: User retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: User retrieved successfully
-                  data:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                      username:
-                        type: string
-                      firstName:
-                        type: string
-                      lastName:
-                        type: string
-                      email:
-                        type: string
-                      phoneNumber:
-                        type: string
-                      role:
-                        type: string
-                      userActive:
-                        type: boolean
-                      adminActive:
-                        type: boolean
-                      createdAt:
-                        type: string
-                        format: date-time
-        '404':
-          description: User not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: User not found
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: USER_NOT_FOUND
-                      details:
-                        type: string
-                        example: The user with the given ID does not exist
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: Internal Server Error
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: INTERNAL_SERVER_ERROR
-                      details:
-                        type: string
-                        example: An unexpected error occurred
-
-    delete:
-      tags:
-        - User
-      summary: Delete a user by ID
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: User deleted successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: User deleted successfully
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: Internal Server Error
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: INTERNAL_SERVER_ERROR
-                      details:
-                        type: string
-                        example: An unexpected error occurred
-  /api/private/hotels:
-    post:
-      summary: Create a new hotel
-      tags:
-        - Hotel
-      requestBody:
-        required: true
-        content:
-          application/json:
-            example:
-              offerTitle: "Special Summer Offer"
-              hotelName: "Grand Plaza"
-              hotelAddress: "123 Main Street"
-              phoneNumber: "+123456789"
-              contactEmail: "info@grandplaza.com"
-              hotelDescription: "Luxury stay in the heart of the city"
-              hotelImageUrl: "https://example.com/image.jpg"
-              stars: 5
-              currency: "USD"
-              price: 200
-              discount: 15
-              marketType: "Luxury"
-              recommended: true
-      responses:
-        '201':
-          description: Hotel created successfully
-          content:
-            application/json:
-              example:
-                message: "Hotel created successfully"
-                data:
-                  id: "abc123"
-                  offerTitle: "Special Summer Offer"
-                  hotelName: "Grand Plaza"
-                  hotelAddress: "123 Main Street"
-                  phoneNumber: "+123456789"
-                  contactEmail: "info@grandplaza.com"
-                  hotelDescription: "Luxury stay in the heart of the city"
-                  hotelImageUrl: "https://example.com/image.jpg"
-                  stars: 5
-                  currency: "USD"
-                  price: 200
-                  discount: 15
-                  marketType: "Luxury"
-                  recommended: true
-                  createdAt: "2025-05-22T10:00:00.000Z"
-                  updatedAt: "2025-05-22T10:00:00.000Z"
-        '400':
-          description: Bad request
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: Internal Server Error
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: INTERNAL_SERVER_ERROR
-                      details:
-                        type: string
-                        example: An unexpected error occurred
-
-    get:
-      summary: Get all hotels
-      tags:
-        - Hotel
-      parameters:
-        - name: limit
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 10
-        - name: page
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 1
-      responses:
-        '200':
-          description: Hotels retrieved successfully
-          content:
-            application/json:
-              example:
-                message: "Hotels retrieved successfully"
-                data:
-                  hotels:
-                    - id: "h1"
-                      hotelName: "Hotel One"
-                      hotelAddress: "Address 1"
-                      hotelImageUrl: "https://example.com/img1.jpg"
-                      price: 120
-                      discount: 10
-                      recommended: true
-                    - id: "h2"
-                      hotelName: "Hotel Two"
-                      hotelAddress: "Address 2"
-                      hotelImageUrl: "https://example.com/img2.jpg"
-                      price: 90
-                      discount: null
-                      recommended: false
-        '400':
-          description: Bad request
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: Internal Server Error
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: INTERNAL_SERVER_ERROR
-                      details:
-                        type: string
-                        example: An unexpected error occurred
-
-  /api/private/hotels/{id}:
-    get:
-      summary: Get hotel by ID
-      tags:
-        - Hotel
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Hotel retrieved successfully
-          content:
-            application/json:
-              example:
-                message: "Hotel retrieved successfully"
-                data:
-                  id: "abc123"
-                  offerTitle: "Spring Discount"
-                  hotelName: "Hotel Paradise"
-                  hotelAddress: "123 Ocean View"
-                  phoneNumber: "+1234567890"
-                  contactEmail: "contact@hotelparadise.com"
-                  hotelDescription: "A luxurious hotel by the sea."
-                  hotelImageUrl: "https://example.com/image.jpg"
-                  stars: 5
-                  currency: "USD"
-                  price: 250
-                  discount: 15
-                  marketType: "Luxury"
-                  recommended: true
-                  createdAt: "2025-05-22T10:00:00.000Z"
-                  updatedAt: "2025-05-22T10:00:00.000Z"
-        '404':
-          description: User not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: user not found
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: USER_NOT_FOUND
-                      details:
-                        type: string
-                        example: User does not exist
-        '400':
-          description: Bad request
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: Internal Server Error
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: INTERNAL_SERVER_ERROR
-                      details:
-                        type: string
-                        example: An unexpected error occurred
-
-    put:
-      summary: Update hotel by ID
-      tags:
-        - Hotel
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            example:
-              offerTitle: "Updated Title"
-              hotelName: "Updated Hotel Name"
-              hotelAddress: "456 Updated Address"
-              phoneNumber: "+1987654321"
-              contactEmail: "new-contact@hotel.com"
-              hotelDescription: "New description for the hotel."
-              hotelImageUrl: "https://example.com/new-image.jpg"
-              stars: 4
-              currency: "EUR"
-              price: 180
-              discount: 10
-              marketType: "Boutique"
-              recommended: false
-      responses:
-        '200':
-          description: Hotel updated successfully
-          content:
-            application/json:
-              example:
-                message: "Hotel updated successfully"
-                data:
-                  id: "abc123"
-                  offerTitle: "Updated Title"
-                  hotelName: "Updated Hotel Name"
-                  hotelAddress: "456 Updated Address"
-                  phoneNumber: "+1987654321"
-                  contactEmail: "new-contact@hotel.com"
-                  hotelDescription: "New description for the hotel."
-                  hotelImageUrl: "https://example.com/new-image.jpg"
-                  stars: 4
-                  currency: "EUR"
-                  price: 180
-                  discount: 10
-                  marketType: "Boutique"
-                  recommended: false
-                  createdAt: "2025-05-01T09:00:00.000Z"
-                  updatedAt: "2025-05-22T10:45:00.000Z"
-        '400':
-          description: Bad request
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: Internal Server Error
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: INTERNAL_SERVER_ERROR
-                      details:
-                        type: string
-                        example: An unexpected error occurred
-
-    delete:
-      summary: Delete hotel by ID
-      tags:
-        - Hotel
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Hotel deleted successfully
-          content:
-            application/json:
-              example:
-                message: "Hotel deleted successfully"
-        '400':
-          description: Bad request
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: Internal Server Error
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: INTERNAL_SERVER_ERROR
-                      details:
-                        type: string
-                        example: An unexpected error occurred
-  /api/private/permission:
-    post:
-      summary: Create a new permission
-      operationId: createPermission
-      tags:
-        - Permission
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - resource
-                - action
-              properties:
-                resource:
-                  type: string
-                  example: hotels
-                  description: The resource name
-                action:
-                  type: string
-                  example: read
-                  description: The action type
-      responses:
-        '201':
-          description: Permission created successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: Permission created successfully
-                  data:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        example: abc123
-                      resource:
-                        type: string
-                        example: hotels
-                      action:
-                        type: string
-                        example: read
-                      identifier:
-                        type: string
-                        example: hotels:read
-                      createdAt:
-                        type: string
-                        format: date-time
-                        example: 2025-05-24T10:00:00Z
-                      updatedAt:
-                        type: string
-                        format: date-time
-                        example: 2025-05-24T10:00:00Z
-
-    get:
-      summary: Get all permissions
-      operationId: getAllPermissions
-      tags:
-        - Permission
-      responses:
-        '200':
-          description: List of all permissions
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      example: abc123
-                    resource:
-                      type: string
-                      example: hotels
-                    action:
-                      type: string
-                      example: read
-  /api/private/role:
-    post:
-      summary: Create a new role
-      operationId: createRole
-      tags:
-        - Role
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - name
-                - isDefault
-                - permissionIds
-              properties:
-                name:
-                  type: string
-                  example: dashboard_admin
-                isDefault:
-                  type: boolean
-                  example: false
-                permissionIds:
-                  type: array
-                  items:
-                    type: string
-                    format: uuid
-                  example:
-                    - 123e4567-e89b-12d3-a456-426614174000
-      responses:
-        '201':
-          description: Role created successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: Role created successfully
-                  data:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        format: uuid
-                        example: 001a2b3c-4d5e-6f70-8g9h-0ijk1l2m3n4o
-                      name:
-                        type: string
-                        example: dashboard_admin
-                      isDefault:
-                        type: boolean
-                        example: false
-                      createdAt:
-                        type: string
-                        format: date-time
-                        example: 2025-05-24T12:00:00Z
-                      updatedAt:
-                        type: string
-                        format: date-time
-                        example: 2025-05-24T12:00:00Z
-                      deletedAt:
-                        type: string
-                        format: date-time
-                        nullable: true
-                        example: null
-
-    get:
-      summary: Get all roles
-      operationId: getAllRoles
-      tags:
-        - Role
-      responses:
-        '200':
-          description: List of all roles
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: Roles fetched successfully
-                  data:
-                    type: array
-                    items:
-                        type: object
-                        properties:
-                          id:
-                            type: string
-                            format: uuid
-                            example: 001a2b3c-4d5e-6f70-8g9h-0ijk1l2m3n4o
-                          name:
-                            type: string
-                            example: dashboard_admin
-                          isDefault:
-                            type: boolean
-                            example: false
-                          createdAt:
-                            type: string
-                            format: date-time
-                            example: 2025-05-24T12:00:00Z
-                          deletedAt:
-                            type: string
-                            format: date-time
-                            example: null
-
-  /api/private/visa:
-    post:
-      summary: Create a new visa
-      tags:
-        - Visa
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                countryId:
-                  type: string
-                price:
-                  type: number
-                currency:
-                  type: string
-                description:
-                  type: string
-                conditions:
-                  type: string
-                status:
-                  type: boolean
-                duration:
-                  type: string
-              required:
-                - name
-                - countryId
-                - price
-                - currency
-                - description
-                - conditions
-                - status
-                - duration
-      responses:
-        '201':
-          description: Visa created successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  data:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                      name:
-                        type: string
-                      countryId:
-                        type: string
-                      price:
-                        type: number
-                      currency:
-                        type: string
-                      description:
-                        type: string
-                      conditions:
-                        type: string
-                      status:
-                        type: boolean
-                      duration:
-                        type: string
-                      createdAt:
-                        type: string
-                        format: date-time
-                      updatedAt:
-                        type: string
-                        format: date-time
-                      deletedAt:
-                        type: string
-                        format: date-time
-                        nullable: true
-        '500':
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                      details:
-                        type: string
-
-    get:
-      summary: Get all visas
-      tags:
-        - Visa
-      parameters:
-        - name: page
-          in: query
-          schema:
-            type: integer
-        - name: pageSize
-          in: query
-          schema:
-            type: integer
-        - name: countryId
-          in: query
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Visas retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                        name:
-                          type: string
-                        countryId:
-                          type: string
-                        price:
-                          type: number
-                        currency:
-                          type: string
-                        description:
-                          type: string
-                        conditions:
-                          type: string
-                        status:
-                          type: boolean
-                        duration:
-                          type: string
-                        createdAt:
-                          type: string
-                          format: date-time
-                        updatedAt:
-                          type: string
-                          format: date-time
-                        deletedAt:
-                          type: string
-                          format: date-time
-                          nullable: true
-        '500':
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                      details:
-                        type: string
-
-  /api/private/visa/{id}:
-    get:
-      summary: Get visa by ID
-      tags:
-        - Visa
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Visa retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  data:
-                    oneOf:
-                      - type: object
-                        properties:
-                          id:
-                            type: string
-                          name:
-                            type: string
-                          countryId:
-                            type: string
-                          price:
-                            type: number
-                          currency:
-                            type: string
-                          description:
-                            type: string
-                          conditions:
-                            type: string
-                          status:
-                            type: boolean
-                          duration:
-                            type: string
-                          createdAt:
-                            type: string
-                            format: date-time
-                          updatedAt:
-                            type: string
-                            format: date-time
-                          deletedAt:
-                            type: string
-                            format: date-time
-                            nullable: true
-                      - type: "null"
-        '404':
-          description: Visa not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                      details:
-                        type: string
-        '500':
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                      details:
-                        type: string
-
-    put:
-      summary: Update a visa
-      tags:
-        - Visa
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                countryId:
-                  type: string
-                price:
-                  type: number
-                currency:
-                  type: string
-                description:
-                  type: string
-                conditions:
-                  type: string
-                status:
-                  type: boolean
-                duration:
-                  type: string
-      responses:
-        '200':
-          description: Visa updated successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  data:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                      name:
-                        type: string
-                      countryId:
-                        type: string
-                      price:
-                        type: number
-                      currency:
-                        type: string
-                      description:
-                        type: string
-                      conditions:
-                        type: string
-                      status:
-                        type: boolean
-                      duration:
-                        type: string
-                      createdAt:
-                        type: string
-                        format: date-time
-                      updatedAt:
-                        type: string
-                        format: date-time
-                      deletedAt:
-                        type: string
-                        format: date-time
-                        nullable: true
-        '500':
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                      details:
-                        type: string
-
-    delete:
-      summary: Delete a visa
-      tags:
-        - Visa
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Visa deleted successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-        '500':
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                      details:
-                        type: string
-  /api/private/service-fees:
-    post:
-      summary: Create a new service fee
-      tags:
-        - Service Fees
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - tourcodeTitle
-                - GDSProvider
-              properties:
-                tourcodeTitle:
-                  type: string
-                description:
-                  type: string
-                  nullable: true
-                GDSProvider:
-                  type: string
-      responses:
-        '201':
-          description: Service fee created successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  data:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                      tourcodeTitle:
-                        type: string
-                      description:
-                        type: string
-                        nullable: true
-                      GDSProvider:
-                        type: string
-
-    get:
-      summary: Retrieve all service fees
-      tags:
-        - Service Fees
-      parameters:
-        - in: query
-          name: limit
-          schema:
-            type: integer
-        - in: query
-          name: page
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Service fees retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                        tourcodeTitle:
-                          type: string
-                        GDSProvider:
-                          type: string
-                        itinerary:
-                          type: array
-                          items:
+    /api/user/public/sign-in:
+        post:
+            tags: [auth]
+            summary: Sign in a user
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
                             type: object
+                            required: [username, password]
                             properties:
-                              itinerary:
-                                type: string
-                              classes:
-                                type: string
-                              bookingFrom:
-                                type: string
-                              bookingTo:
-                                type: string
-                              departureFrom:
-                                type: string
-                              departureTo:
-                                type: string
-                              active:
-                                type: boolean
-                        accounting:
-                          type: array
-                          items:
+                                username:
+                                    type: string
+                                password:
+                                    type: string
+            responses:
+                200:
+                    description: User signed in successfully
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message:
+                                        type: string
+                                    data:
+                                        type: object
+                                        properties:
+                                            accessToken:
+                                                type: string
+                400:
+                    $ref: "#/components/responses/ValidationError"
+                404:
+                    $ref: "#/components/responses/UserNotFound"
+                500:
+                    $ref: "#/components/responses/InternalServerError"
+
+    /api/user/public/refresh:
+        get:
+            tags: [auth]
+            summary: Refresh user access token
+            responses:
+                201:
+                    description: Token refreshed successfully
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message:
+                                        type: string
+                                    data:
+                                        type: object
+                                        properties:
+                                            accessToken:
+                                                type: string
+                401:
+                    $ref: "#/components/responses/AuthFailed"
+                403:
+                    $ref: "#/components/responses/AuthFailed"
+                404:
+                    $ref: "#/components/responses/UserNotFound"
+                500:
+                    $ref: "#/components/responses/InternalServerError"
+
+    /api/user/private:
+        get:
+            tags: [user]
+            summary: Get all users
+            parameters:
+                - name: page
+                  in: query
+                  schema:
+                      type: integer
+                - name: limit
+                  in: query
+                  schema:
+                      type: integer
+            responses:
+                200:
+                    description: Users retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message:
+                                        type: string
+                                    data:
+                                        type: array
+                                        items:
+                                            $ref: "#/components/schemas/User"
+                401:
+                    $ref: "#/components/responses/AuthError"
+                500:
+                    $ref: "#/components/responses/InternalServerError"
+
+        post:
+            tags: [user]
+            summary: Create a new user
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
                             type: object
+                            required:
+                                [
+                                    firstName,
+                                    lastName,
+                                    username,
+                                    email,
+                                    password,
+                                    phoneNumber,
+                                    address,
+                                    userActive,
+                                    adminActive,
+                                    agency,
+                                ]
+                            properties:
+                                firstName:
+                                    type: string
+                                lastName:
+                                    type: string
+                                username:
+                                    type: string
+                                email:
+                                    type: string
+                                password:
+                                    type: string
+                                phoneNumber:
+                                    type: string
+                                address:
+                                    type: string
+                                userActive:
+                                    type: boolean
+                                adminActive:
+                                    type: boolean
+                                agency:
+                                    type: string
+            responses:
+                201:
+                    description: User created successfully
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message:
+                                        type: string
+                                    data:
+                                        type: object
+                                        properties:
+                                            user:
+                                                $ref: "#/components/schemas/User"
+                400:
+                    $ref: "#/components/responses/ValidationError"
+                404:
+                    $ref: "#/components/responses/ResourceNotFound"
+                500:
+                    $ref: "#/components/responses/InternalServerError"
 
-  /api/private/service-fees/{id}:
-    get:
-      summary: Find a service fee by ID
-      tags:
-        - Service Fees
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Service fee retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  data:
-                    type: object
-                    properties:
-                      itinerary:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            id:
-                              type: string
-                            itinerary:
-                              type: string
-                            tourcodeCompany:
-                              type: string
-                            type:
-                              type: string
-                              nullable: true
-                            classes:
-                              type: string
-                            bookingFrom:
-                              type: string
-                            bookingTo:
-                              type: string
-                            departureFrom:
-                              type: string
-                            departureTo:
-                              type: string
-                            active:
-                              type: boolean
-                            serviceFeesId:
-                              type: string
-                      accounting:
-                        type: array
-                        items:
-                          type: object
-        '404':
-          description: Service fee not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                      details:
-                        type: string
+    /api/user/private/{id}:
+        get:
+            tags: [user]
+            summary: Get user by ID
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                200:
+                    description: User retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message:
+                                        type: string
+                                    data:
+                                        type: object
+                                        properties:
+                                            user:
+                                                $ref: "#/components/schemas/User"
+                400:
+                    $ref: "#/components/responses/ValidationError"
+                404:
+                    $ref: "#/components/responses/ResourceNotFound"
+                401:
+                    $ref: "#/components/responses/AuthError"
+                500:
+                    $ref: "#/components/responses/InternalServerError"
 
-  /api/private/service-fees/itinerary:
-    post:
-      summary: Create a new itinerary
-      tags:
-        - Service Fees
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - serviceFeesId
-                - tourcodeCompany
-                - itinerary
-                - classes
-                - bookingFrom
-                - bookingTo
-                - departureFrom
-                - departureTo
-                - active
-              properties:
-                serviceFeesId:
-                  type: string
-                tourcodeCompany:
-                  type: string
-                type:
-                  type: string
-                  nullable: true
-                itinerary:
-                  type: string
-                classes:
-                  type: string
-                bookingFrom:
-                  type: string
-                bookingTo:
-                  type: string
-                departureFrom:
-                  type: string
-                departureTo:
-                  type: string
-                active:
-                  type: boolean
-      responses:
-        '201':
-          description: Itinerary created successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  data:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                      itinerary:
-                        type: string
-                      tourcodeCompany:
-                        type: string
-                      type:
-                        type: string
-                        nullable: true
-                      classes:
-                        type: string
-                      bookingFrom:
-                        type: string
-                      bookingTo:
-                        type: string
-                      departureFrom:
-                        type: string
-                      departureTo:
-                        type: string
-                      active:
-                        type: boolean
-                      serviceFeesId:
-                        type: string
+        delete:
+            tags: [user]
+            summary: Delete user by ID
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                200:
+                    description: User deleted successfully
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message:
+                                        type: string
+                400:
+                    $ref: "#/components/responses/ValidationError"
+                404:
+                    $ref: "#/components/responses/ResourceNotFound"
+                401:
+                    $ref: "#/components/responses/AuthError"
+                500:
+                    $ref: "#/components/responses/InternalServerError"
 
-  /api/private/service-fees/accounting:
-    post:
-      summary: Create new accounting
-      tags:
-        - Service Fees
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - serviceFeesId
-                - fixedPrice
-              properties:
-                serviceFeesId:
-                  type: string
-                fixedPrice:
-                  type: number
-                percentage:
-                  type: number
-                  nullable: true
-      responses:
-        '201':
-          description: Accounting created successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  data:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                      serviceFeesId:
-                        type: string
-                      fixedPrice:
-                        type: number
-                      percentage:
-                        type: number
-                        nullable: true
-  /api/private/agency:
-
-    get:
-        summary: Get all agencies
-        tags: [Agency]
-        parameters:
-          - in: query
-            name: page
-            schema:
-              type: integer
-          - in: query
-            name: limit
-            schema:
-              type: integer
-        responses:
-          '200':
-            description: Users retrieved successfully
-    post:
-      summary: Create a new agency
-      tags: [Agency]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                agencyName:
-                  type: string
-                RIZCode:
-                  type: string
-                email:
-                  type: string
-                website:
-                  type: string
-                agencyAddress:
-                  type: string
-                phoneNum1:
-                  type: string
-                phoneNum2:
-                  type: string
-                phoneNum3:
-                  type: string
-                MFAType:
-                  type: string
-                  enum: [EMAIL, MOBILE, GAUTH]
-                activated:
-                  type: boolean
-                isCompany:
-                  type: boolean
-                useTravelersProfiles:
-                  type: boolean
-              required: [agencyName, RIZCode, email, MFAType, activated, isCompany, useTravelersProfiles]
-      responses:
-        '201':
-          description: Agency created successfully
-
-  /api/private/agency/accounting:
-    post:
-      summary: Create accounting settings for an agency
-      tags: [Agency]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                agencyId:
-                  type: string
-                localCurrency:
-                  type: string
-                localDepositBalance:
-                  type: number
-                agencyCommissionHotel:
-                  type: number
-                agencyCommissionLowCoTick:
-                  type: number
-                hideEtickectPrice:
-                  type: boolean
-                hideHotelVoucherPrice:
-                  type: boolean
-                hideCancellationPoliciesOnHotelVoucher:
-                  type: boolean
-              required: [agencyId, localCurrency, localDepositBalance]
-      responses:
-        '201':
-          description: Accounting agency created successfully
-
-  /api/private/agency/authorization:
-    post:
-      summary: Create authorization for an agency
-      tags: [Agency]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                agencyId:
-                  type: string
-                localAutherizedOverdraw:
-                  type: number
-                confirmBooking:
-                  type: boolean
-                GDSBookWithoutBalance:
-                  type: boolean
-                foreignCurrencycCertAuthorization:
-                  type: boolean
-              required: [agencyId, confirmBooking]
-      responses:
-        '201':
-          description: Authorization created successfully
-
-  /api/private/agency/product:
-    post:
-      summary: Create product configuration for an agency
-      tags: [Agency]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                agencyId:
-                  type: string
-                flightBooking:
-                  type: boolean
-                hotelBooking:
-                  type: boolean
-                package:
-                  type: boolean
-                visa:
-                  type: boolean
-              required: [agencyId]
-      responses:
-        '201':
-          description: Product created successfully
-
-  /api/private/agency/b2b:
-    post:
-      summary: Create B2B info for an agency
-      tags: [Agency]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                agencyId:
-                  type: string
-                country:
-                  type: string
-                department:
-                  type: string
-                city:
-                  type: string
-                latitude:
-                  type: number
-                longitude:
-                  type: number
-                B2CpointOfSale:
-                  type: boolean
-              required: [agencyId, country, city]
-      responses:
-        '201':
-          description: B2B info created successfully
-
-  /api/private/agency/{id}:
-    get:
-      summary: Get agency by ID
-      tags: [Agency]
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Agency retrieved successfully
-        '404':
-          description: Agency not found
-  /api/private/visa-bookings:
-    post:
-      summary: Request a new visa booking
-      tags:
-        - VisaBookings
-      requestBody:
-        required: true
-        content:
-          application/json:
-            example:
-              visaId: "visa_123"
-              agentName: "John Doe"
-              agencyName: "Best Travel Agency"
-              travelStartingDate: "2025-06-01"
-              groupSize: 5
-              documents: ["passport.pdf", "photo.jpg"]
-              nationality: "Algerian"
-              totalPrice: "200000 DA"
-      responses:
-        '201':
-          description: Visa booking request created successfully
-
-    get:
-      summary: Get all visa bookings
-      tags:
-        - VisaBookings
-      parameters:
-        - name: page
-          in: query
-          required: false
-          schema:
-            type: integer
-        - name: limit
-          in: query
-          required: false
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Visa bookings retrieved successfully
-
-  /visa-bookings/{id}:
-    get:
-      summary: Get a specific visa booking by ID
-      tags:
-        - VisaBookings
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Visa booking retrieved successfully
-
-    put:
-      summary: Update a visa booking by ID
-      tags:
-        - VisaBookings
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            example:
-              travelStartingDate: "06/01/2025"
-              status: "Processing"
-              nationality: "Algerian"
-              notes: "Urgent processing needed"
-      responses:
-        '200':
-          description: Visa booking updated successfully
-
-    delete:
-      summary: Delete a visa booking by ID
-      tags:
-        - VisaBookings
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '204':
-          description: Visa booking deleted successfully
-  /api/private/country:
-    post:
-      summary: Create a new country
-      tags:
-        - Country
-      requestBody:
-        required: true
-        content:
-          application/json:
-            example:
-              name: "USA"
-              embassyLocation: "123 Embassy St, Algiers"
-              flagUrl: "https://example.com/flags/usa.png"
-              embassyWebsite: "https://usa-embassy.example.com"
-              embassyPhone: "+123456789"
-              embassyEmail: "contact@usa-embassy.com"
-              embassyFax: "+987654321"
-              embassyHours: "Mon-Fri 9:00-17:00"
-      responses:
-        '201':
-          description: Created a country successfully
-          content:
-            application/json:
-              example:
-                message: "Created a country successfully"
-                data:
-                  id: "uuid"
-                  name: "USA"
-                  embassyLocation: "123 Embassy St, Algiers"
-                  flagUrl: "https://example.com/flags/usa.png"
-                  embassyWebsite: "https://usa-embassy.example.com"
-                  embassyPhone: "+123456789"
-                  embassyEmail: "contact@usa-embassy.com"
-                  embassyFax: "+987654321"
-                  embassyHours: "Mon-Fri 9:00-17:00"
-
-    put:
-      summary: Update a country
-      tags:
-        - Country
-      parameters:
-        - in: query
-          name: id
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            example:
-              name: "USA Updated"
-              embassyLocation: "456 Embassy Ave, Algiers"
-              flagUrl: "https://example.com/flags/usa.png"
-              embassyWebsite: "https://updated-embassy.example.com"
-              embassyPhone: "+123456789"
-              embassyEmail: "contact@updated-embassy.com"
-              embassyFax: "+987654321"
-              embassyHours: "Mon-Fri 10:00-18:00"
-      responses:
-        '200':
-          description: Successfully updated country
-          content:
-            application/json:
-              example:
-                message: "Successfully updated country"
-                data:
-                  id: "uuid"
-                  name: "USA Updated"
-
-    get:
-      summary: Get all countries
-      tags:
-        - Country
-      responses:
-        '200':
-          description: List of all countries
-          content:
-            application/json:
-              example:
-                message: "Successfully created country"
-                data:
-                  - id: "uuid"
-                    name: "USA"
-                    embassyLocation: "123 Embassy St, Algiers"
-                    flagUrl: "https://example.com/flags/usa.png"
-
-  /api/private/country/{id}:
-    get:
-      summary: Get a country by ID
-      tags:
-        - Country
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Country found
-          content:
-            application/json:
-              example:
-                message: "Successfully created country"
-                data:
-                  id: "uuid"
-                  name: "USA"
-                  embassyLocation: "123 Embassy St, Algiers"
-                  flagUrl: "https://example.com/flags/usa.png"
-        '404':
-          description: Country not found
-          content:
-            application/json:
-              example:
-                message: "Could not find country"
-                code: "NOT_FOUND"
+    /api/user/private/sign-out:
+        get:
+            tags: [auth]
+            summary: Sign out the current user
+            responses:
+                200:
+                    description: User signed out successfully
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message:
+                                        type: string
+                401:
+                    $ref: "#/components/responses/AuthError"
+                500:
+                    $ref: "#/components/responses/InternalServerError"
 
 components:
-  schemas:
-    ConstraintError:
-      type: object
-      properties:
-        message:
-          type: string
-          example: Validation error
-        error:
-          type: object
-          properties:
-            code:
-              type: string
-              example: VALIDATION_ERROR
-            details:
-              type: string
-              example: Invalid request data
-    InternalServerError:
-      type: object
-      properties:
-        message:
-          type: string
-          example: Internal Server Error
-        error:
-          type: object
-          properties:
-            code:
-              type: string
-              example: INTERNAL_SERVER_ERROR
-            details:
-              type: string
-              example: An unexpected error occurred
-    Passenger:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        visaRequestId:
-          type: string
-          format: uuid
-        name:
-          type: string
-        surname:
-          type: string
-        placeOfBirth:
-          type: string
-        dateOfBirth:
-          type: string
-          format: date-time
-        passportNumber:
-          type: string
-        passportDeliveryDate:
-          type: string
-          format: date-time
-        passportExpirationDate:
-          type: string
-          format: date-time
-        email:
-          type: string
-        phone:
-          type: string
-        notes:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-        deletedAt:
-          type: string
-          format: date-time
-        passengerDocuments:
-          type: array
-          items:
-            $ref: '#/components/schemas/PassengerDocument'
+    schemas:
+        User:
+            type: object
+            properties:
+                id:
+                    type: string
+                firstName:
+                    type: string
+                lastName:
+                    type: string
+                username:
+                    type: string
+                email:
+                    type: string
+                role:
+                    type: string
+                createdAt:
+                    type: string
+                    format: date-time
+                userActive:
+                    type: boolean
+                adminActive:
+                    type: boolean
+                phoneNumber:
+                    type: string
 
-    PassengerDocument:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        passengerId:
-          type: string
-          format: uuid
-        documentId:
-          type: string
-          format: uuid
-        label:
-          type: string
-        isMandatory:
-          type: boolean
-        createdAt:
-          type: string
-          format: date-time
-        passengerDocumentsFiles:
-          $ref: '#/components/schemas/DocumentFile'
-
-    DocumentFile:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        filePath:
-          type: string
-        fileType:
-          type: string
-        name:
-          type: string
-        uploadedAt:
-          type: string
-          format: date-time
+    responses:
+        ValidationError:
+            description: Invalid input or missing fields
+            content:
+                application/json:
+                    schema:
+                        type: object
+                        properties:
+                            message:
+                                type: string
+                            error:
+                                type: object
+                                properties:
+                                    code:
+                                        type: string
+                                    details:
+                                        type: string
+        ResourceNotFound:
+            description: Resource not found
+            content:
+                application/json:
+                    schema:
+                        type: object
+                        properties:
+                            message:
+                                type: string
+                            error:
+                                type: object
+                                properties:
+                                    code:
+                                        type: string
+                                    details:
+                                        type: string
+        AuthFailed:
+            description: Authentication failed
+            content:
+                application/json:
+                    schema:
+                        type: object
+                        properties:
+                            message:
+                                type: string
+                            error:
+                                type: object
+                                properties:
+                                    code:
+                                        type: string
+                                    details:
+                                        type: string
+        AuthError:
+            description: Authorization required or invalid
+            content:
+                application/json:
+                    schema:
+                        type: object
+                        properties:
+                            message:
+                                type: string
+                            error:
+                                type: object
+                                properties:
+                                    code:
+                                        type: string
+                                    details:
+                                        type: string
+        InternalServerError:
+            description: Unexpected server error
+            content:
+                application/json:
+                    schema:
+                        type: object
+                        properties:
+                            message:
+                                type: string
+                            error:
+                                type: object
+                                properties:
+                                    code:
+                                        type: string
+                                    details:
+                                        type: string
+        UserNotFound:
+            description: User not found
+            content:
+                application/json:
+                    schema:
+                        type: object
+                        properties:
+                            message:
+                                type: string
+                            error:
+                                type: object
+                                properties:
+                                    code:
+                                        type: string
+                                    details:
+                                        type: string

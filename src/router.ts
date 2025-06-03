@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response, Router } from "express";
-import { healthCheck } from "@business/middlewares/health";
-import BusinessLogicRoute from "@business/apis/router";
+import { healthCheck } from "@middlewares/health";
+import BusinessLogicRoute from "@/api";
 
 const router = Router();
 

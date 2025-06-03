@@ -1,4 +1,4 @@
-import { RedisSingleton } from "@config/redis";
+import { RedisSingleton } from "@/config/rate-limit";
 import { jest } from "@jest/globals";
 
 jest.mock("@config/redis.config", () => import("./test/__mocks__/redisSingleton"));

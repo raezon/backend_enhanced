@@ -41,6 +41,7 @@ model User {
   adminActive  Boolean     @default(true)
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
+  connection_from_outside Boolean @default(false)
 
   agencyInfo   AgencyInfos? @relation(fields: [agency], references: [id])
   agency       String?      // FK to AgencyInfos.id
