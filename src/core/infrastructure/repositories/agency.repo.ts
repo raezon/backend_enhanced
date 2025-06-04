@@ -68,4 +68,13 @@ export const agencyRepo = {
             data,
         });
     },
+
+    uploadLogo: async ({ filePath, id }: { filePath: string; id: string }) => {
+        return prisma.logo.create({
+            data: {
+                logoPath: filePath,
+                agencyId: id,
+            },
+        });
+    },
 };

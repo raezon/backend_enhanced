@@ -35,30 +35,53 @@ export const AgencyController = {
     }),
 
     createNewAccounting: TryCatchBlock(async (req: Request, res: Response) => {
-        const data = await AgencyService.createNewAccountingAgency(req.body);
+        const data = await AgencyService.createNewAccountingAgency({
+            ...req.body,
+            agencyId: req.params.id,
+        });
         res.status(201).json({
             message: "Accounting agency created successfully",
             data,
         });
     }),
     createAuthorization: TryCatchBlock(async (req: Request, res: Response) => {
-        const data = await AgencyService.createAuthorization(req.body);
+        const data = await AgencyService.createAuthorization({
+            ...req.body,
+            agencyId: req.params.id,
+        });
         res.status(201).json({
             message: "Authorization created successfully",
             data,
         });
     }),
     createAgencyProduct: TryCatchBlock(async (req: Request, res: Response) => {
-        const data = await AgencyService.createAgencyProduct(req.body);
+        const data = await AgencyService.createAgencyProduct({
+            ...req.body,
+            agencyId: req.params.id,
+        });
         res.status(201).json({
             message: "Agency product created successfully",
             data,
         });
     }),
     createB2b: TryCatchBlock(async (req: Request, res: Response) => {
-        const data = await AgencyService.createB2b(req.body);
+        const data = await AgencyService.createB2b({ ...req.body, agencyId: req.params.id });
         res.status(201).json({
             message: "B2B created successfully",
+            data,
+        });
+    }),
+
+    addAgencyLogo: TryCatchBlock(async (req: Request, res: Response) => {
+        const file = req.file as Express.Multer.File;
+
+        const data = await AgencyService.uploadLogo({
+            filePath: file.path,
+            id: req.params.id,
+        });
+
+        res.status(201).json({
+            message: "Logo uploaded successfully",
             data,
         });
     }),

@@ -88,7 +88,6 @@ export const AuthService = {
         authHeader: string | undefined;
         flashAll?: boolean;
     }) => {
-        printf.info("check refresh token");
 
         if (!authHeader) {
             throw new ConstraintError(
@@ -102,7 +101,6 @@ export const AuthService = {
         const [bearer, token] = authHeader.split(" ");
 
         if (bearer !== Env.AUTH_BEARER || !token) {
-            printf.error(`refresh token error => ${bearer !== Env.AUTH_BEARER} , ${token}`);
 
             throw new ConstraintError(
                 "Invalid Authorization format",
@@ -111,8 +109,6 @@ export const AuthService = {
                 "Expected format: 'Bearer <token>'"
             );
         }
-
-        printf.success(`refresh token valid`);
 
         try {
             const isBlacklisted = await redisClient.exists(token);
@@ -126,7 +122,6 @@ export const AuthService = {
             }
 
             const decoded = TokenService.verifyToken(token);
-            printf.debug(`check decoded => ${JSON.stringify(decoded)}`);
 
             if (!decoded) {
                 throw new ConstraintError(
@@ -137,10 +132,7 @@ export const AuthService = {
                 );
             }
 
-            printf.debug(`check decoded => ${decoded}`);
             const user = await userRepo.findUserById({ id: decoded.id });
-
-
 
             if (!user) {
                 throw new ConstraintError(
@@ -150,8 +142,6 @@ export const AuthService = {
                     "The user associated with this token no longer exists"
                 );
             }
-
-            printf.debug(`check decoded => ${JSON.stringify(user.getData())}`);
 
             if (flashAll === true) {
                 await redisClient.set(token, "blacklisted");

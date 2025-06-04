@@ -14,7 +14,7 @@ export const UserController = {
         });
     }),
     getAllUsers: TryCatchBlock(async (req: Request, res: Response) => {
-        const { page, limit } = req.query;
+        const { limit = 10, page = 1 } = req.query;
 
         const data = await UserService.getAllUsers({
             limit: Number(limit),
@@ -41,7 +41,7 @@ export const UserController = {
 
     deleteUser: TryCatchBlock(async (req: Request, res: Response) => {
         const { id } = req.params;
-        userRepo.delete({ id });
+        await UserService.deleteUser({ id });
         res.status(200).json({
             message: "User deleted successfully",
         });

@@ -4,6 +4,7 @@ import { validate as isValidUuid } from "uuid";
 import { Prisma } from "@prisma/client";
 import { agencyRepo } from "@/core/infrastructure/repositories/agency.repo";
 import bcrypt from "bcryptjs";
+import printf from "@/scripts/printf";
 
 export const UserService = {
     deleteUser: async ({ id }: { id: string | null }) => {
@@ -13,6 +14,18 @@ export const UserService = {
                 400,
                 "INVALID_INPUT",
                 "User ID must be provided as a non-empty string"
+            );
+        }
+
+        const data = await userRepo.findUserById({ id });
+        printf.debug(`data => ${data}`);
+
+        if (!data) {
+            throw new ConstraintError(
+                "User not found",
+                404,
+                "RESOURCE_NOT_FOUND",
+                `This USER could not be found`
             );
         }
 
@@ -46,7 +59,7 @@ export const UserService = {
         };
     },
 
-    getAllUsers: async ({ limit = 10, page = 1 }: { page: number; limit: number }) => {
+    getAllUsers: async ({ limit, page }: { page: number; limit: number }) => {
         const users = await userRepo.findAll({
             page,
             limit,
@@ -98,7 +111,7 @@ export const UserService = {
         ];
 
         for (const field of requiredFields) {
-            if (!rest[field]) {
+            if (rest[field] === undefined) {
                 throw new ConstraintError(
                     "Missing required field",
                     400,

@@ -4,6 +4,28 @@ import { ConstraintError } from "../base/constraint-error";
 import { validate as isValidUuid } from "uuid";
 
 export const AgencyService = {
+    uploadLogo: async ({ filePath, id }: { filePath: string; id: string }) => {
+        if (!id || typeof id !== "string" || id.trim() === "" || !isValidUuid(id)) {
+            throw new ConstraintError(
+                "Agency ID validation failed",
+                400,
+                "INVALID_INPUT",
+                "Agency ID must be provided as a non-empty string"
+            );
+        }
+
+        const data = await agencyRepo.findOne({ id });
+
+        if (!data) {
+            throw new ConstraintError("Agency not found", 404, "NOT_FOUND", "Agency not found");
+        }
+
+        return agencyRepo.uploadLogo({
+            filePath,
+            id,
+        });
+    },
+
     createNewAgency: async (data: Prisma.AgencyInfosCreateInput) => {
         const requiredFields = [
             "agencyName",
@@ -21,7 +43,7 @@ export const AgencyService = {
         ];
 
         for (const field of requiredFields) {
-            if (!data[field]) {
+            if (data[field] === undefined) {
                 throw new ConstraintError(
                     "Missing required field",
                     400,
@@ -32,7 +54,6 @@ export const AgencyService = {
         }
 
         const result = await agencyRepo.create(data);
-
         return result;
     },
 
@@ -44,10 +65,10 @@ export const AgencyService = {
     getAgencyById: async ({ id }: { id: string | undefined }) => {
         if (!id || typeof id !== "string" || id.trim() === "" || !isValidUuid(id)) {
             throw new ConstraintError(
-                "User ID validation failed",
+                "Agency ID validation failed",
                 400,
                 "INVALID_INPUT",
-                "User ID must be provided as a non-empty string"
+                "Agency ID must be provided as a non-empty string"
             );
         }
 
@@ -72,10 +93,10 @@ export const AgencyService = {
             !isValidUuid(agencyId)
         ) {
             throw new ConstraintError(
-                "Country ID validation failed",
+                "Agency ID validation failed",
                 400,
                 "INVALID_INPUT",
-                "Country ID must be provided as a non-empty string"
+                "Agency ID must be provided as a non-empty string"
             );
         }
 
@@ -98,7 +119,7 @@ export const AgencyService = {
         ];
 
         for (const field of requiredFields) {
-            if (!rest[field]) {
+            if (rest[field] === undefined) {
                 throw new ConstraintError(
                     "Missing required field",
                     400,
@@ -136,10 +157,10 @@ export const AgencyService = {
             !isValidUuid(agencyId)
         ) {
             throw new ConstraintError(
-                "Country ID validation failed",
+                "Agency ID validation failed",
                 400,
                 "INVALID_INPUT",
-                "Country ID must be provided as a non-empty string"
+                "Agency ID must be provided as a non-empty string"
             );
         }
 
@@ -155,7 +176,6 @@ export const AgencyService = {
         }
 
         const requiredFields = [
-            "agencyId",
             "localAutherizedOverdraw",
             "confirmBooking",
             "GDSBookWithoutBalance",
@@ -163,7 +183,7 @@ export const AgencyService = {
         ];
 
         for (const field of requiredFields) {
-            if (!rest[field]) {
+            if (rest[field] === undefined) {
                 throw new ConstraintError(
                     "Missing required field",
                     400,
@@ -195,10 +215,10 @@ export const AgencyService = {
             !isValidUuid(agencyId)
         ) {
             throw new ConstraintError(
-                "Country ID validation failed",
+                "Agency ID validation failed",
                 400,
                 "INVALID_INPUT",
-                "Country ID must be provided as a non-empty string"
+                "Agency ID must be provided as a non-empty string"
             );
         }
 
@@ -213,7 +233,7 @@ export const AgencyService = {
             );
         }
 
-        const requiredFields = ["agencyId", "flightBooking", "hotelBooking", "package", "visa"];
+        const requiredFields = ["flightBooking", "hotelBooking", "package", "visa"];
 
         for (const field of requiredFields) {
             if (!rest[field]) {
@@ -248,10 +268,10 @@ export const AgencyService = {
             !isValidUuid(agencyId)
         ) {
             throw new ConstraintError(
-                "Country ID validation failed",
+                "Agency ID validation failed",
                 400,
                 "INVALID_INPUT",
-                "Country ID must be provided as a non-empty string"
+                "Agency ID must be provided as a non-empty string"
             );
         }
 
@@ -267,7 +287,6 @@ export const AgencyService = {
         }
 
         const requiredFields = [
-            "agencyId",
             "country",
             "department",
             "city",
