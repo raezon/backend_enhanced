@@ -44,7 +44,7 @@ export const VisaService = {
         ];
 
         for (const field of requiredFields) {
-            if (!rest[field]) {
+            if (rest[field] === undefined) {
                 throw new ConstraintError(
                     "Missing required field",
                     400,
