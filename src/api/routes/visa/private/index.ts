@@ -6,8 +6,8 @@ const { createNewVisa, deleteVisa, getAllVisas, getVisaById, updateVisa } = Visa
 
 router.get("", getAllVisas);
 router.post("", createNewVisa);
-router.get(":id", getVisaById);
-router.put(":id", updateVisa);
-router.delete(":id", deleteVisa);
+router.get("/:id", getVisaById);
+router.put("/:id", updateVisa);
+router.delete("/:id", deleteVisa);
 
 export default router;

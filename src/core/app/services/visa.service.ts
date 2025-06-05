@@ -41,6 +41,7 @@ export const VisaService = {
             "description",
             "conditions",
             "duration",
+            "status",
         ];
 
         for (const field of requiredFields) {
@@ -103,10 +104,10 @@ export const VisaService = {
 
         if (!isExist) {
             throw new ConstraintError(
-                "Country not found",
+                "Visa not found",
                 404,
                 "RESOURCE_NOT_FOUND",
-                `This Country could not be found`
+                `This Visa could not be found`
             );
         }
 
@@ -170,9 +171,7 @@ export const VisaService = {
             "countryId",
         ];
 
-        const invalidFields = Object.keys(inputData).filter(
-            (field) => !allowedFields.includes(field)
-        );
+        const invalidFields = Object.keys(rest).filter((field) => !allowedFields.includes(field));
 
         if (invalidFields.length > 0) {
             throw new ConstraintError(
@@ -223,11 +222,13 @@ export const VisaService = {
 
         const data = await visaRepo.updateVisa(id, {
             ...rest,
-            country: {
-                connect: {
-                    id: countryId,
+            ...(countryId && {
+                country: {
+                    connect: {
+                        id: countryId,
+                    },
                 },
-            },
+            }),
         });
 
         return data;
