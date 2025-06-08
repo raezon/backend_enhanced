@@ -4,24 +4,26 @@ import { Prisma } from "@prisma/client";
 import { ConstraintError } from "../base/constraint-error";
 import { validate as isValidUuid } from "uuid";
 import { countryRepo } from "@/core/infrastructure/repositories/country.repo";
+import Joi from "joi";
+import { validateInput } from "@/utils/validate-input";
 
 export const VisaService = {
     createNewVisa: async (inputData: Prisma.VisaCreateInput & { countryId: string }) => {
-        const { countryId, ...rest } = inputData;
+        const createVisaSchema = Joi.object({
+            countryId: Joi.string().guid({ version: "uuidv4" }).required().messages({
+                "string.guid": "Country ID must be a valid UUID",
+                "any.required": "Country ID is required",
+            }),
+            name: Joi.string().required(),
+            price: Joi.number().required(),
+            currency: Joi.string().required(),
+            description: Joi.string().required(),
+            conditions: Joi.string().required(),
+            duration: Joi.string().required(),
+            status: Joi.boolean().required(),
+        });
 
-        if (
-            !countryId ||
-            typeof countryId !== "string" ||
-            countryId.trim() === "" ||
-            !isValidUuid(countryId)
-        ) {
-            throw new ConstraintError(
-                "Country ID validation failed",
-                400,
-                "INVALID_INPUT",
-                "Country ID must be provided as a non-empty string"
-            );
-        }
+        const { countryId, ...rest } = validateInput<typeof inputData>(createVisaSchema, inputData);
 
         const countryExists = await countryRepo.countryExist({ id: countryId });
 
@@ -32,27 +34,6 @@ export const VisaService = {
                 "RESOURCE_NOT_FOUND",
                 `This Country could not be found`
             );
-        }
-
-        const requiredFields = [
-            "name",
-            "price",
-            "currency",
-            "description",
-            "conditions",
-            "duration",
-            "status",
-        ];
-
-        for (const field of requiredFields) {
-            if (rest[field] === undefined) {
-                throw new ConstraintError(
-                    "Missing required field",
-                    400,
-                    "MISSING_REQUIRED_FIELD",
-                    `${field} is a required field`
-                );
-            }
         }
 
         const createInput: Prisma.VisaCreateInput = {
@@ -66,16 +47,7 @@ export const VisaService = {
         return data;
     },
 
-    getVisaById: async ({ id }: { id: string | undefined }) => {
-        if (!id || typeof id !== "string" || id.trim() === "" || !isValidUuid(id)) {
-            throw new ConstraintError(
-                "Invalid ID format",
-                400,
-                "VALIDATION_ERROR",
-                "Visa ID must be a valid UUID"
-            );
-        }
-
+    getVisaById: async ({ id }: { id: string }) => {
         const data = await visaRepo.findOne({ id });
 
         if (!data) {
@@ -90,24 +62,15 @@ export const VisaService = {
         return data;
     },
 
-    deleteVisa: async ({ id }: { id: string | undefined }) => {
-        if (!id || typeof id !== "string" || id.trim() === "" || !isValidUuid(id)) {
-            throw new ConstraintError(
-                "Invalid ID format",
-                400,
-                "VALIDATION_ERROR",
-                "Visa ID must be a valid UUID"
-            );
-        }
-
+    deleteVisa: async ({ id }: { id: string }) => {
         const isExist = await visaRepo.exists({ id });
 
         if (!isExist) {
             throw new ConstraintError(
-                "Country not found",
+                "Visa not found",
                 404,
                 "RESOURCE_NOT_FOUND",
-                `This Country could not be found`
+                `This Visa could not be found`
             );
         }
 
@@ -136,7 +99,20 @@ export const VisaService = {
             countryId?: string;
         }
     ) => {
-        const { id, countryId, ...rest } = inputData;
+        const updateVisaSchema = Joi.object({
+            name: Joi.string().optional(),
+            price: Joi.number().optional(),
+            currency: Joi.string().optional(),
+            description: Joi.string().optional(),
+            conditions: Joi.string().optional(),
+            duration: Joi.string().optional(),
+            status: Joi.boolean().optional(),
+            countryId: Joi.string().guid({ version: "uuidv4" }).optional().messages({
+                "string.guid": "Country ID must be a valid UUID",
+            }),
+        });
+
+        const { id, ...updateFields } = inputData;
 
         if (!id || typeof id !== "string" || id.trim() === "" || !isValidUuid(id)) {
             throw new ConstraintError(
@@ -147,10 +123,11 @@ export const VisaService = {
             );
         }
 
+        // Ensure there is at least one field to update
         if (
-            typeof inputData !== "object" ||
-            inputData === null ||
-            Object.keys(inputData).length === 0
+            typeof updateFields !== "object" ||
+            updateFields === null ||
+            Object.keys(updateFields).length === 0
         ) {
             throw new ConstraintError(
                 "Invalid request body",
@@ -160,32 +137,11 @@ export const VisaService = {
             );
         }
 
-        const allowedFields = [
-            "name",
-            "price",
-            "currency",
-            "description",
-            "conditions",
-            "duration",
-            "status",
-            "countryId",
-        ];
-
-        const invalidFields = Object.keys(rest).filter(
-            (field) => !allowedFields.includes(field)
-        );
-
-        if (invalidFields.length > 0) {
-            throw new ConstraintError(
-                "Invalid fields in request",
-                400,
-                "INVALID_FIELDS",
-                `The following fields cannot be updated: ${invalidFields.join(", ")}`
-            );
-        }
+        // Validate fields using Joi
+        const validated = validateInput<typeof updateFields>(updateVisaSchema, updateFields);
+        const { countryId, ...rest } = validated;
 
         const isExist = await visaRepo.exists({ id });
-
         if (!isExist) {
             throw new ConstraintError(
                 "Visa not found",
@@ -196,22 +152,7 @@ export const VisaService = {
         }
 
         if (countryId) {
-            if (
-                !countryId ||
-                typeof countryId !== "string" ||
-                countryId.trim() === "" ||
-                !isValidUuid(countryId)
-            ) {
-                throw new ConstraintError(
-                    "Invalid ID format",
-                    400,
-                    "VALIDATION_ERROR",
-                    "Country ID must be a valid UUID"
-                );
-            }
-
             const countryExists = await countryRepo.countryExist({ id: countryId });
-
             if (!countryExists) {
                 throw new ConstraintError(
                     "Country not found",
