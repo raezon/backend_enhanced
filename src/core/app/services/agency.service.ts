@@ -7,15 +7,6 @@ import { validateInput } from "@/utils/validate-input";
 
 export const AgencyService = {
     uploadLogo: async ({ filePath, id }: { filePath: string; id: string }) => {
-        if (!id || typeof id !== "string" || id.trim() === "" || !isValidUuid(id)) {
-            throw new ConstraintError(
-                "Agency ID validation failed",
-                400,
-                "INVALID_INPUT",
-                "Agency ID must be provided as a non-empty string"
-            );
-        }
-
         const data = await agencyRepo.findOne({ id });
 
         if (!data) {
@@ -39,9 +30,9 @@ export const AgencyService = {
             phoneNum2: Joi.string().optional(),
             phoneNum3: Joi.string().optional(),
             MFAType: Joi.string().valid("EMAIL", "SMS", "APP").required(),
-            activated: Joi.boolean().optional(),
-            isCompany: Joi.boolean().optional(),
-            useTravelersProfiles: Joi.boolean().optional(),
+            activated: Joi.boolean().optional().default(false),
+            isCompany: Joi.boolean().optional().default(false),
+            useTravelersProfiles: Joi.boolean().optional().default(false),
         });
 
         const validatedData = validateInput(createAgencySchema, data);
@@ -55,16 +46,7 @@ export const AgencyService = {
         return data;
     },
 
-    getAgencyById: async ({ id }: { id: string | undefined }) => {
-        if (!id || typeof id !== "string" || id.trim() === "" || !isValidUuid(id)) {
-            throw new ConstraintError(
-                "Agency ID validation failed",
-                400,
-                "INVALID_INPUT",
-                "Agency ID must be provided as a non-empty string"
-            );
-        }
-
+    getAgencyById: async ({ id }: { id: string }) => {
         const data = await agencyRepo.findOne({ id });
 
         if (!data) {
@@ -77,21 +59,37 @@ export const AgencyService = {
     createNewAccountingAgency: async (
         inputData: Prisma.AccountingCreateInput & { agencyId: string }
     ) => {
-        const { agencyId, ...rest } = inputData;
+        const createAccountingSchema = Joi.object({
+            agencyId: Joi.string()
+                .guid({ version: ["uuidv4"] })
+                .required()
+                .messages({
+                    "string.guid": "Agency ID must be a valid UUID",
+                    "any.required": "Agency ID is required",
+                }),
 
-        if (
-            !agencyId ||
-            typeof agencyId !== "string" ||
-            agencyId.trim() === "" ||
-            !isValidUuid(agencyId)
-        ) {
-            throw new ConstraintError(
-                "Agency ID validation failed",
-                400,
-                "INVALID_INPUT",
-                "Agency ID must be provided as a non-empty string"
-            );
-        }
+            agencyCommissionLowCoTick: Joi.number().required().messages({
+                "any.required": "agencyCommissionLowCoTick is a required field",
+            }),
+
+            hideEtickectPrice: Joi.boolean().optional().default(false).messages({
+                "any.required": "hideEtickectPrice is a required field",
+            }),
+
+            hideHotelVoucherPrice: Joi.boolean().optional().default(false).messages({
+                "any.required": "hideHotelVoucherPrice is a required field",
+            }),
+
+            hideCancellationPoliciesOnHotelVoucher: Joi.boolean()
+                .optional()
+                .default(false)
+                .messages({
+                    "any.required": "hideCancellationPoliciesOnHotelVoucher is a required field",
+                }),
+        });
+
+        const validatedInput = validateInput(createAccountingSchema, inputData);
+        const { agencyId, ...rest } = validatedInput;
 
         const agencyExists = await agencyRepo.agencyExists({ id: agencyId });
 
@@ -104,35 +102,14 @@ export const AgencyService = {
             );
         }
 
-        const requiredFields = [
-            "agencyCommissionLowCoTick",
-            "hideEtickectPrice",
-            "hideHotelVoucherPrice",
-            "hideCancellationPoliciesOnHotelVoucher",
-        ];
-
-        for (const field of requiredFields) {
-            if (rest[field] === undefined) {
-                throw new ConstraintError(
-                    "Missing required field",
-                    400,
-                    "MISSING_REQUIRED_FIELD",
-                    `${field} is a required field`
-                );
-            }
-        }
-
         const createInput: Prisma.AccountingCreateInput = {
             ...rest,
             agencyInfos: {
-                connect: {
-                    id: agencyId,
-                },
+                connect: { id: agencyId },
             },
         };
 
         const data = await agencyRepo.createAccounting(createInput);
-
         return data;
     },
 
