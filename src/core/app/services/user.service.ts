@@ -5,6 +5,7 @@ import { agencyRepo } from "@/core/infrastructure/repositories/agency.repo";
 import Joi from "joi";
 import { validateInput } from "@/utils/validate-input";
 import { randomBytes } from "node:crypto";
+import { sendPasswordResetEmail } from "@/config/sendgrid";
 
 export const UserService = {
     changeUserPassword: async (inputData: { password: string; id: string }) => {
@@ -102,6 +103,7 @@ export const UserService = {
         const password = randomBytes(8).toString("hex");
 
         // send email
+        await sendPasswordResetEmail(rest.email, password);
 
         const createInput: Prisma.UserCreateInput = {
             ...rest,

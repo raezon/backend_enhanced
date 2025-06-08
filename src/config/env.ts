@@ -23,6 +23,9 @@ const envSchemaObject = Joi.object({
     AUTH_BEARER: Joi.string().required(),
     REFRESH_HIDEOUT: Joi.string().required(),
     REFRESH_BEARER: Joi.string().required(),
+    SENDGRID_API_KEY: Joi.string().required(),
+    FRONTEND_URL: Joi.string().uri().required(),
+    EMAIL_SENDER: Joi.string().email().required(),
 }).unknown(true);
 
 const { error, value } = envSchemaObject.validate(process.env, {
@@ -54,6 +57,9 @@ const ENV = {
     AUTH_BEARER: value.AUTH_BEARER,
     REFRESH_HIDEOUT: value.REFRESH_HIDEOUT,
     REFRESH_BEARER: value.REFRESH_BEARER,
+    SENDGRID_API_KEY: value.SENDGRID_API_KEY,
+    FRONTEND_URL: value.FRONTEND_URL,
+    EMAIL_SENDER: value.EMAIL_SENDER,
 };
 
 export default ENV;
