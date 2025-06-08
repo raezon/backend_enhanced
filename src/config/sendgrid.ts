@@ -5,7 +5,7 @@ import ENV from "./env";
 sgMail.setApiKey(ENV.SENDGRID_API_KEY!);
 
 export const sendPasswordResetEmail = async (email: string, token: string) => {
-    const resetLink = `${ENV.FRONTEND_URL}/update-password?token=${token}`;
+    const resetLink = `${ENV.FRONTEND_URL}/update-password`;
 
     const msg = {
         to: email,

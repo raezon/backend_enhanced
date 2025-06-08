@@ -56,7 +56,7 @@ const createApp = async (): Promise<Application> => {
             origin: true, // Reflects the request origin
             credentials: true,
             allowedHeaders: [ENV.TOKEN_HIDEOUT, "Content-Type", "Authorization"],
-            methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS" , "PATCH"],
             maxAge: 86400,
         })
     );
