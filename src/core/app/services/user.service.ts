@@ -22,7 +22,10 @@ export const UserService = {
         });
         const { password, email } = validateInput<{ password: string; email: string }>(schema, inputData);
 
-        const user = await userRepo.updatePassword({ email, password });
+        const user = await userRepo.updatePassword({
+            email,
+            password: bcrypt.hashSync(password, 10),
+        });
 
         return user.getData();
     },
