@@ -104,10 +104,10 @@ export const VisaService = {
 
         if (!isExist) {
             throw new ConstraintError(
-                "Visa not found",
+                "Country not found",
                 404,
                 "RESOURCE_NOT_FOUND",
-                `This Visa could not be found`
+                `This Country could not be found`
             );
         }
 
@@ -171,7 +171,9 @@ export const VisaService = {
             "countryId",
         ];
 
-        const invalidFields = Object.keys(rest).filter((field) => !allowedFields.includes(field));
+        const invalidFields = Object.keys(rest).filter(
+            (field) => !allowedFields.includes(field)
+        );
 
         if (invalidFields.length > 0) {
             throw new ConstraintError(
