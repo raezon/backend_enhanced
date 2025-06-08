@@ -4,22 +4,13 @@ import { validate as isValidUuid } from "uuid";
 import { Prisma } from "@prisma/client";
 import { agencyRepo } from "@/core/infrastructure/repositories/agency.repo";
 import bcrypt from "bcryptjs";
-import printf from "@/scripts/printf";
+import Joi from "joi";
+import { validateInput } from "@/utils/validate-input";
+import { randomBytes } from "node:crypto";
 
 export const UserService = {
-    deleteUser: async ({ id }: { id: string | null }) => {
-        if (!id || typeof id !== "string" || id.trim() === "" || !isValidUuid(id)) {
-            throw new ConstraintError(
-                "User ID validation failed",
-                400,
-                "INVALID_INPUT",
-                "User ID must be provided as a non-empty string"
-            );
-        }
-
+    deleteUser: async ({ id }: { id: string }) => {
         const data = await userRepo.findUserById({ id });
-        printf.debug(`data => ${data}`);
-
         if (!data) {
             throw new ConstraintError(
                 "User not found",
@@ -33,16 +24,7 @@ export const UserService = {
             id,
         });
     },
-    getUserById: async ({ id }: { id: string | null }) => {
-        if (!id || typeof id !== "string" || id.trim() === "" || !isValidUuid(id)) {
-            throw new ConstraintError(
-                "User ID validation failed",
-                400,
-                "INVALID_INPUT",
-                "User ID must be provided as a non-empty string"
-            );
-        }
-
+    getUserById: async ({ id }: { id: string }) => {
         const data = await userRepo.findUserById({ id });
 
         if (!data) {
@@ -68,25 +50,29 @@ export const UserService = {
         return users;
     },
     createNewUser: async (inputData: Prisma.UserCreateInput & { agency: string }) => {
-        const { agencyInfo, agency: agencyId, ...rest } = inputData;
-
-        if (
-            !agencyId ||
-            typeof agencyId !== "string" ||
-            agencyId.trim() === "" ||
-            !isValidUuid(agencyId)
-        ) {
-            throw new ConstraintError(
-                "Agency ID validation failed",
-                400,
-                "INVALID_INPUT",
-                "Agency ID must be provided as a non-empty string"
-            );
-        }
-
-        const agencyExists = await agencyRepo.agencyExists({
-            id: agencyId,
+        const createUserSchema = Joi.object({
+            firstName: Joi.string().required(),
+            lastName: Joi.string().required(),
+            username: Joi.string().required(),
+            email: Joi.string().email().required(),
+            phoneNumber: Joi.string().required(),
+            address: Joi.string().required(),
+            userActive: Joi.boolean().required(),
+            connection_from_outside: Joi.boolean().required(),
+            role: Joi.string()
+                .valid("agency_admin", "agent", "platforme_staff", "system_admin")
+                .required(),
+            agency: Joi.string().guid({ version: "uuidv4" }).required().messages({
+                "string.guid": "Agency ID must be a valid UUID",
+            }),
         });
+
+        const { agency: agencyId, ...rest } = validateInput<typeof inputData>(
+            createUserSchema,
+            inputData
+        );
+
+        const agencyExists = await agencyRepo.agencyExists({ id: agencyId });
 
         if (!agencyExists) {
             throw new ConstraintError(
@@ -97,44 +83,13 @@ export const UserService = {
             );
         }
 
-        const requiredFields = [
-            "firstName",
-            "lastName",
-            "username",
-            "email",
-            "password",
-            "phoneNumber",
-            "address",
-            "userActive",
-            "connection_from_outside",
-            "role",
-        ];
+        const password = randomBytes(8).toString("hex");
 
-        for (const field of requiredFields) {
-            if (rest[field] === undefined) {
-                throw new ConstraintError(
-                    "Missing required field",
-                    400,
-                    "MISSING_REQUIRED_FIELD",
-                    `${field} is a required field`
-                );
-            }
-        }
-
-        const roles = ["agency_admin", "agent", "platforme_staff", "system_admin"];
-
-        if (!roles.includes(rest.role)) {
-            throw new ConstraintError(
-                "Invalid role provided",
-                400,
-                "INVALID_ROLE",
-                `The role '${rest.role}' is not valid. Valid roles are: ${roles.join(", ")}.`
-            );
-        }
+        // send email
 
         const createInput: Prisma.UserCreateInput = {
             ...rest,
-            password: await bcrypt.hash(rest.password, 10),
+            password,
             agencyInfo: {
                 connect: {
                     id: agencyId,

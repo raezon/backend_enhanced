@@ -3,7 +3,9 @@ import { ConstraintError } from "../base/constraint-error";
 import { Env, redisClient } from "@/config";
 import TokenService from "@/services/jwt";
 import { TokenExpiredError } from "jsonwebtoken";
-import printf from "@/scripts/printf";
+import { validateInput } from "@/utils/validate-input";
+import { Prisma } from "@prisma/client";
+import Joi from "joi";
 
 export const AuthService = {
     refreshUser: async ({ refreshToken }: { refreshToken: string | undefined }) => {
@@ -42,7 +44,22 @@ export const AuthService = {
         return { accessToken };
     },
 
-    authUser: async ({ password, username }: { username: string; password: string }) => {
+    authUser: async (inputData: { username: string; password: string }) => {
+        
+        const signInSchema = Joi.object({
+            username: Joi.string().required().messages({
+                "any.required": "Username is required",
+            }),
+            password: Joi.string().min(6).required().messages({
+                "any.required": "Password is required",
+                "string.min": "Password must be at least 6 characters",
+            }),
+        });
+        const { username, password } = validateInput<Prisma.UserCreateInput>(
+            signInSchema,
+            inputData
+        );
+
         const isUser = await userRepo.findUserByUsername({
             username,
         });
@@ -88,7 +105,6 @@ export const AuthService = {
         authHeader: string | undefined;
         flashAll?: boolean;
     }) => {
-
         if (!authHeader) {
             throw new ConstraintError(
                 "Authorization required",
@@ -101,7 +117,6 @@ export const AuthService = {
         const [bearer, token] = authHeader.split(" ");
 
         if (bearer !== Env.AUTH_BEARER || !token) {
-
             throw new ConstraintError(
                 "Invalid Authorization format",
                 400, // Bad Request
