@@ -72,20 +72,9 @@ export const AgencyService = {
                 "any.required": "agencyCommissionLowCoTick is a required field",
             }),
 
-            hideEtickectPrice: Joi.boolean().optional().default(false).messages({
-                "any.required": "hideEtickectPrice is a required field",
-            }),
-
-            hideHotelVoucherPrice: Joi.boolean().optional().default(false).messages({
-                "any.required": "hideHotelVoucherPrice is a required field",
-            }),
-
-            hideCancellationPoliciesOnHotelVoucher: Joi.boolean()
-                .optional()
-                .default(false)
-                .messages({
-                    "any.required": "hideCancellationPoliciesOnHotelVoucher is a required field",
-                }),
+            hideEtickectPrice: Joi.boolean().optional().default(false),
+            hideHotelVoucherPrice: Joi.boolean().optional(),
+            hideCancellationPoliciesOnHotelVoucher: Joi.boolean().optional().default(false),
         });
 
         const validatedInput = validateInput(createAccountingSchema, inputData);
@@ -118,21 +107,25 @@ export const AgencyService = {
             agencyId: string;
         }
     ) => {
-        const { agencyId, ...rest } = inputData;
+        const createAuthorizationSchema = Joi.object({
+            agencyId: Joi.string()
+                .guid({ version: ["uuidv4"] })
+                .required()
+                .messages({
+                    "string.guid": "Agency ID must be a valid UUID",
+                    "any.required": "Agency ID is required",
+                }),
 
-        if (
-            !agencyId ||
-            typeof agencyId !== "string" ||
-            agencyId.trim() === "" ||
-            !isValidUuid(agencyId)
-        ) {
-            throw new ConstraintError(
-                "Agency ID validation failed",
-                400,
-                "INVALID_INPUT",
-                "Agency ID must be provided as a non-empty string"
-            );
-        }
+            localAutherizedOverdraw: Joi.number().required().messages({
+                "any.required": "localAutherizedOverdraw is a required field",
+            }),
+            confirmBooking: Joi.boolean().optional().default(false),
+            GDSBookWithoutBalance: Joi.boolean().optional().default(false),
+            foreignCurrencycCertAuthorization: Joi.boolean().optional().default(false),
+        });
+
+        const validatedInput = validateInput(createAuthorizationSchema, inputData);
+        const { agencyId, ...rest } = validatedInput;
 
         const agencyExists = await agencyRepo.agencyExists({ id: agencyId });
 
@@ -145,30 +138,10 @@ export const AgencyService = {
             );
         }
 
-        const requiredFields = [
-            "localAutherizedOverdraw",
-            "confirmBooking",
-            "GDSBookWithoutBalance",
-            "foreignCurrencycCertAuthorization",
-        ];
-
-        for (const field of requiredFields) {
-            if (rest[field] === undefined) {
-                throw new ConstraintError(
-                    "Missing required field",
-                    400,
-                    "MISSING_REQUIRED_FIELD",
-                    `${field} is a required field`
-                );
-            }
-        }
-
         const createInput: Prisma.AuthorationCreateInput = {
             ...rest,
             agencyInfos: {
-                connect: {
-                    id: agencyId,
-                },
+                connect: { id: agencyId },
             },
         };
 
