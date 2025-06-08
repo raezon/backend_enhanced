@@ -3,10 +3,10 @@ import { User } from "@/core/domains/user";
 import { Prisma } from "@prisma/client";
 
 export const userRepo = {
-    updatePassword: async ({ password, id }: { password: string; id: string }) => {
+    updatePassword: async ({ password, email }: { password: string; email: string }) => {
         const data = await prisma.user.update({
             where: {
-                id,
+                email,
             },
             data: {
                 password,

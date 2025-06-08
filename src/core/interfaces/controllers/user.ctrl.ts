@@ -6,10 +6,7 @@ import { Request, Response } from "express";
 
 export const UserController = {
     changeUserPassword: TryCatchBlock(async (req: Request, res: Response) => {
-        const data = await UserService.changeUserPassword({
-            password: req.body.password,
-            id: req.params.id,
-        });
+        const data = await UserService.changeUserPassword(req.body);
 
         res.status(200).json({
             message: "Password updated successfully",

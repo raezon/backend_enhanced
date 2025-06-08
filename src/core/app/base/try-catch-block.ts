@@ -1,3 +1,4 @@
+import printf from "@/scripts/printf";
 import { ConstraintError } from "./constraint-error";
 import { Request, RequestHandler, Response, NextFunction } from "express";
 
@@ -6,7 +7,7 @@ export const TryCatchBlock = (fn: RequestHandler): RequestHandler => {
         try {
             await fn(req, res, next);
         } catch (error: unknown) {
-            console.log("Error caught in TryCatchBlock:", error);
+            printf.error(`Error caught in TryCatchBlock: ${JSON.stringify(error)}`);
 
             if (error instanceof ConstraintError) {
                 return res.status(error.status).json({

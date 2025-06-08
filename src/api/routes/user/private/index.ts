@@ -6,11 +6,11 @@ import { idValidator } from "@/middlewares/id-validator";
 const { createNewUser, deleteUser, getAllUsers, getUserById, signOut, changeUserPassword } =
     UserController;
 
+router.patch("/change-password", changeUserPassword);
 router.get("/sign-out", signOut);
 router.post("/", createNewUser);
 router.get("/", getAllUsers);
 router.get("/:id", idValidator("id", "User ID"), getUserById);
 router.delete("/:id", idValidator("id", "User ID"), deleteUser);
-router.patch("/:id/change-password", idValidator("id", "User ID"), changeUserPassword);
 
 export default router;

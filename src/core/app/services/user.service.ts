@@ -8,20 +8,20 @@ import { randomBytes } from "node:crypto";
 import { sendPasswordResetEmail } from "@/config/sendgrid";
 
 export const UserService = {
-    changeUserPassword: async (inputData: { password: string; id: string }) => {
+    changeUserPassword: async (inputData: { password: string; email: string }) => {
         const schema = Joi.object({
-            id: Joi.string().guid({ version: "uuidv4" }).required().messages({
-                "any.required": "User ID is required",
-                "string.guid": "User ID must be a valid UUID",
+            email: Joi.string().email().required().messages({
+                "any.required": "Email is required",
+                "string.email": "Email must be a valid email",
             }),
             password: Joi.string().min(6).required().messages({
                 "any.required": "Password is required",
                 "string.min": "Password must be at least 6 characters",
             }),
         });
-        const { password, id } = validateInput<{ password: string; id: string }>(schema, inputData);
+        const { password, email } = validateInput<{ password: string; email: string }>(schema, inputData);
 
-        const user = await userRepo.updatePassword({ id, password });
+        const user = await userRepo.updatePassword({ email, password });
 
         return user.getData();
     },
@@ -75,7 +75,7 @@ export const UserService = {
             phoneNumber: Joi.string().required(),
             address: Joi.string().required(),
             userActive: Joi.boolean().required(),
-            connection_from_outside: Joi.boolean().required(),
+            connection_from_outside: Joi.boolean().optional().default(false),
             role: Joi.string()
                 .valid("agency_admin", "agent", "platforme_staff", "system_admin")
                 .required(),
