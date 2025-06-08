@@ -3,6 +3,19 @@ import { User } from "@/core/domains/user";
 import { Prisma } from "@prisma/client";
 
 export const userRepo = {
+    updatePassword: async ({ password, id }: { password: string; id: string }) => {
+        const data = await prisma.user.update({
+            where: {
+                id,
+            },
+            data: {
+                password,
+            },
+        });
+
+        return new User(data);
+    },
+
     findUserByUsername: async ({ username }: { username: string }) => {
         const data = await prisma.user.findUnique({
             where: {

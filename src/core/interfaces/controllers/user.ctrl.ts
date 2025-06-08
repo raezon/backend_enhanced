@@ -1,11 +1,22 @@
 import { Env } from "@/config";
 import { TryCatchBlock } from "@/core/app/base/try-catch-block";
 import { AuthService } from "@/core/app/services/auth.service";
-import { userRepo } from "@/core/infrastructure/repositories/user.repo";
 import { UserService } from "@core/app/services/user.service";
 import { Request, Response } from "express";
 
 export const UserController = {
+    changeUserPassword: TryCatchBlock(async (req: Request, res: Response) => {
+        const data = await UserService.changeUserPassword({
+            password: req.body.password,
+            id: req.params.id,
+        });
+
+        res.status(200).json({
+            message: "Password updated successfully",
+            data,
+        });
+    }),
+
     createNewUser: TryCatchBlock(async (req: Request, res: Response) => {
         const data = await UserService.createNewUser(req.body);
         res.status(201).json({

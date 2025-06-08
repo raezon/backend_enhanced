@@ -1,14 +1,30 @@
 import { userRepo } from "@core/infrastructure/repositories/user.repo";
 import { ConstraintError } from "../base/constraint-error";
-import { validate as isValidUuid } from "uuid";
 import { Prisma } from "@prisma/client";
 import { agencyRepo } from "@/core/infrastructure/repositories/agency.repo";
-import bcrypt from "bcryptjs";
 import Joi from "joi";
 import { validateInput } from "@/utils/validate-input";
 import { randomBytes } from "node:crypto";
 
 export const UserService = {
+    changeUserPassword: async (inputData: { password: string; id: string }) => {
+        const schema = Joi.object({
+            id: Joi.string().guid({ version: "uuidv4" }).required().messages({
+                "any.required": "User ID is required",
+                "string.guid": "User ID must be a valid UUID",
+            }),
+            password: Joi.string().min(6).required().messages({
+                "any.required": "Password is required",
+                "string.min": "Password must be at least 6 characters",
+            }),
+        });
+        const { password, id } = validateInput<{ password: string; id: string }>(schema, inputData);
+
+        const user = await userRepo.updatePassword({ id, password });
+
+        return user.getData();
+    },
+
     deleteUser: async ({ id }: { id: string }) => {
         const data = await userRepo.findUserById({ id });
         if (!data) {
