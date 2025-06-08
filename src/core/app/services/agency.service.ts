@@ -4,6 +4,7 @@ import { ConstraintError } from "../base/constraint-error";
 import { validate as isValidUuid } from "uuid";
 import Joi from "joi";
 import { validateInput } from "@/utils/validate-input";
+import printf from "@/scripts/printf";
 
 export const AgencyService = {
     uploadLogo: async ({ filePath, id }: { filePath: string; id: string }) => {
@@ -202,23 +203,25 @@ export const AgencyService = {
     },
 
     createB2b: async (inputData: Prisma.B2CCreateInput & { agencyId: string }) => {
-        const { agencyId, ...rest } = inputData;
+        printf.debug(`Creating B2B with input data: ${JSON.stringify(inputData)}`);
+        const b2cSchema = Joi.object({
+            country: Joi.string().required(),
+            department: Joi.string().required(),
+            city: Joi.string().required(),
+            latitude: Joi.number().min(-90).max(90).required(),
+            longitude: Joi.number().min(-180).max(180).required(),
+            B2CpointOfSale: Joi.boolean().required(),
+        });
 
-        if (
-            !agencyId ||
-            typeof agencyId !== "string" ||
-            agencyId.trim() === "" ||
-            !isValidUuid(agencyId)
-        ) {
-            throw new ConstraintError(
-                "Agency ID validation failed",
-                400,
-                "INVALID_INPUT",
-                "Agency ID must be provided as a non-empty string"
-            );
-        }
+        const validatedInput = validateInput(b2cSchema, inputData);
 
-        const agencyExists = await agencyRepo.agencyExists({ id: agencyId });
+        const { agencyId, ...rest } = validatedInput;
+        printf.debug(
+            `Creating B2B with input data validatedInput: ${JSON.stringify(validatedInput)}`
+        );
+
+
+        const agencyExists = await agencyRepo.agencyExists({ id: inputData.agencyId });
 
         if (!agencyExists) {
             throw new ConstraintError(
@@ -229,31 +232,11 @@ export const AgencyService = {
             );
         }
 
-        const requiredFields = [
-            "country",
-            "department",
-            "city",
-            "latitude",
-            "longitude",
-            "B2CpointOfSale",
-        ];
-
-        for (const field of requiredFields) {
-            if (!rest[field]) {
-                throw new ConstraintError(
-                    "Missing required field",
-                    400,
-                    "MISSING_REQUIRED_FIELD",
-                    `${field} is a required field`
-                );
-            }
-        }
-
         const createInput: Prisma.B2CCreateInput = {
             ...rest,
             agencyInfos: {
                 connect: {
-                    id: agencyId,
+                    id: inputData.agencyId,
                 },
             },
         };

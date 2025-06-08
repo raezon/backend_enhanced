@@ -39,7 +39,7 @@ export const AuthService = {
                 "User not found"
             );
         }
-        const accessToken = TokenService.generateToken({ id: user.user.id }, user.user.role, "15m");
+        const accessToken = TokenService.generateToken({ id: user.user.id }, user.user.role, "30d");
 
         return { accessToken };
     },
@@ -87,7 +87,7 @@ export const AuthService = {
         const accessToken = TokenService.generateToken(
             { id: isUser.user.id },
             isUser.user.role,
-            "15m"
+            "30d"
         );
         const refreshToken = TokenService.generateToken(
             { id: isUser.user.id },
