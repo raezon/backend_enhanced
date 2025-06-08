@@ -2,6 +2,8 @@ import { agencyRepo } from "@core/infrastructure/repositories/agency.repo";
 import { Prisma } from "@prisma/client";
 import { ConstraintError } from "../base/constraint-error";
 import { validate as isValidUuid } from "uuid";
+import Joi from "joi";
+import { validateInput } from "@/utils/validate-input";
 
 export const AgencyService = {
     uploadLogo: async ({ filePath, id }: { filePath: string; id: string }) => {
@@ -27,33 +29,24 @@ export const AgencyService = {
     },
 
     createNewAgency: async (data: Prisma.AgencyInfosCreateInput) => {
-        const requiredFields = [
-            "agencyName",
-            "RIZCode",
-            "email",
-            "website",
-            "agencyAddress",
-            "phoneNum1",
-            "phoneNum2",
-            "phoneNum3",
-            "MFAType",
-            "activated",
-            "isCompany",
-            "useTravelersProfiles",
-        ];
+        const createAgencySchema = Joi.object({
+            agencyName: Joi.string().required(),
+            RIZCode: Joi.string().required(),
+            email: Joi.string().email().required(),
+            website: Joi.string().uri().required(),
+            agencyAddress: Joi.string().required(),
+            phoneNum1: Joi.string().required(),
+            phoneNum2: Joi.string().optional(),
+            phoneNum3: Joi.string().optional(),
+            MFAType: Joi.string().valid("EMAIL", "SMS", "APP").required(),
+            activated: Joi.boolean().optional(),
+            isCompany: Joi.boolean().optional(),
+            useTravelersProfiles: Joi.boolean().optional(),
+        });
 
-        for (const field of requiredFields) {
-            if (data[field] === undefined) {
-                throw new ConstraintError(
-                    "Missing required field",
-                    400,
-                    "MISSING_REQUIRED_FIELD",
-                    `${field} is a required field`
-                );
-            }
-        }
+        const validatedData = validateInput(createAgencySchema, data);
 
-        const result = await agencyRepo.create(data);
+        const result = await agencyRepo.create(validatedData);
         return result;
     },
 
