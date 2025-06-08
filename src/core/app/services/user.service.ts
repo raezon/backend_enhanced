@@ -6,6 +6,7 @@ import Joi from "joi";
 import { validateInput } from "@/utils/validate-input";
 import { randomBytes } from "node:crypto";
 import { sendPasswordResetEmail } from "@/config/sendgrid";
+import bcrypt from "bcryptjs";
 
 export const UserService = {
     changeUserPassword: async (inputData: { password: string; email: string }) => {
@@ -107,7 +108,7 @@ export const UserService = {
 
         const createInput: Prisma.UserCreateInput = {
             ...rest,
-            password,
+            password:bcrypt.hashSync(password, 10),
             agencyInfo: {
                 connect: {
                     id: agencyId,
