@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 
 export const visaBookingRepo = {
     update: async (inputData: Prisma.VisaRequestUpdateInput & { visaId: string; id: string }) => {
-        const { visaId, id, ...updateFields } = inputData;
+        const { id, ...updateFields } = inputData;
 
         return await prisma.$transaction(async (tx) => {
             const updatedVisaRequest = await tx.visaRequest.update({
@@ -15,20 +15,6 @@ export const visaBookingRepo = {
                     id: true,
                 },
             });
-
-            // Optional: update pivot table if visaId is provided
-            // This is only needed if you're allowing the visaId to change
-            const existingPivot = await tx.visaRequestPivot.findFirst({
-                where: { visaRequestId: id },
-            });
-
-            if (existingPivot?.visaId !== visaId) {
-                await tx.visaRequestPivot.updateMany({
-                    where: { visaRequestId: id },
-                    data: { visaId },
-                });
-            }
-
             return updatedVisaRequest;
         });
     },

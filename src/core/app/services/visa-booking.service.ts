@@ -1,7 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { ConstraintError } from "../base/constraint-error";
 import { visaRepo } from "@/core/infrastructure/repositories/visa.repo";
-import { validate as isValidUuid } from "uuid";
 import { visaBookingRepo } from "@/core/infrastructure/repositories/visa-booking.repo";
 import { passengerRepo } from "@/core/infrastructure/repositories/passenger.repo";
 import Joi from "joi";
@@ -26,6 +25,7 @@ export const VisaBookingService = {
 
         return {
             basicInfos: {
+                visaRequestId: data.visaRequest.id,
                 id: data.id,
                 country: data.visa.country,
                 travelStartingDate: data.visaRequest.travelStartingDate,
@@ -126,7 +126,11 @@ export const VisaBookingService = {
     },
 
     updateVisaRequest: async (
-        inputData: Prisma.VisaRequestUpdateInput & { id: string; files: Express.Multer.File[] }
+        inputData: Prisma.VisaRequestUpdateInput & {
+            id: string;
+            files: Express.Multer.File[];
+            visaRequestId: string;
+        }
     ) => {
         const { id, ...updateFields } = inputData;
 
@@ -145,11 +149,18 @@ export const VisaBookingService = {
             nationality: Joi.string().optional(),
 
             notes: Joi.string().optional(),
+            visaRequestId: Joi.string().optional().messages({
+                "string.base": "Visa request ID must be a string",
+                "string.empty": "Visa request ID cannot be empty",
+                "string.uuid": "Visa request ID must be a valid UUID",
+            }),
         }).min(1);
 
         const validatedFields = validateInput(updateSchema, updateFields);
 
-        const visaRequestExists = await visaBookingRepo.exists({ id });
+        const visaRequestExists = await visaBookingRepo.exists({
+            id: validatedFields.visaRequestId,
+        });
         if (!visaRequestExists) {
             throw new ConstraintError(
                 "Visa request not found",
