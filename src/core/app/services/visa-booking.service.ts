@@ -125,10 +125,10 @@ export const VisaBookingService = {
         });
     },
 
-    updateVisaRequest: async (inputData: Prisma.VisaRequestUpdateInput & { id: string }) => {
+    updateVisaRequest: async (
+        inputData: Prisma.VisaRequestUpdateInput & { id: string; files: Express.Multer.File[] }
+    ) => {
         const { id, ...updateFields } = inputData;
-
-        console.log("Update Fields:", inputData);
 
         const updateSchema = Joi.object({
             travelStartingDate: Joi.date().optional().messages({
