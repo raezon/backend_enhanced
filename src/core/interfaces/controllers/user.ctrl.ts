@@ -6,6 +6,13 @@ import { UserService } from "@core/app/services/user.service";
 import { Request, Response } from "express";
 
 export const UserController = {
+    getProfile: TryCatchBlock(async (req: Request, res: Response) => {
+        res.status(200).json({
+            message: "Password updated successfully",
+            data: (req as RequestWithAuth).user,
+        });
+    }),
+
     changeUserPassword: TryCatchBlock(async (req: Request, res: Response) => {
         const data = await UserService.changeUserPassword(req.body);
 
