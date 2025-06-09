@@ -70,17 +70,17 @@ export const PassengerService = {
         });
 
         
-        const visaRequestExists = await passengerRepo.visaRequestExists(visaRequestId);
-        console.log("Visa Request existence check result:", visaRequestExists);
+        // const visaRequestExists = await passengerRepo.visaRequestExists(visaRequestId);
+        // console.log("Visa Request existence check result:", visaRequestExists);
 
-        if (!visaRequestExists) {
-            console.error(`Visa Request with ID ${visaRequestId} not found`);
-            throw new ConstraintError(
-                "Visa Request not found",
-                404,
-                "RESOURCE_NOT_FOUND",
-                `Visa Request with ID ${visaRequestId} not found`
-            );
-        }
+        // if (!visaRequestExists) {
+        //     console.error(`Visa Request with ID ${visaRequestId} not found`);
+        //     throw new ConstraintError(
+        //         "Visa Request not found",
+        //         404,
+        //         "RESOURCE_NOT_FOUND",
+        //         `Visa Request with ID ${visaRequestId} not found`
+        //     );
+        // }
     },
 };
