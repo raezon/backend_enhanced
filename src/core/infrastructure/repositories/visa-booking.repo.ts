@@ -84,6 +84,10 @@ export const visaBookingRepo = {
 
     findAll: async ({ limit, page }: { page: number; limit: number }) => {
         const skip = (page - 1) * limit;
+        console.log(
+            `[visaBookingRepo.findAll] Pagination - page: ${page}, limit: ${limit}, skip: ${skip}`
+        );
+
         const data = await prisma.visaRequestPivot.findMany({
             skip,
             take: limit,
@@ -111,7 +115,12 @@ export const visaBookingRepo = {
             },
         });
 
-        return data.map((item) => ({
+        console.log(`[visaBookingRepo.findAll] Retrieved data count: ${data.length}`);
+        if (data.length > 0) {
+            console.log(`[visaBookingRepo.findAll] First item:`, JSON.stringify(data, null, 2));
+        }
+
+        const result = data.map((item) => ({
             id: item.visaRequest.id,
             agencyName: item.visaRequest.agencyName,
             agentName: item.visaRequest.agentName,
@@ -124,6 +133,10 @@ export const visaBookingRepo = {
             createdAt: item.visaRequest.createdAt,
             updatedAt: item.visaRequest.updatedAt,
         }));
+
+        console.log("result => ", result);
+
+        return result;
     },
 
     create: async (data: Prisma.VisaRequestCreateInput & { visaId: string }) => {

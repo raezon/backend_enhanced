@@ -21,7 +21,7 @@ export const VisaBookingController = {
     getAllVisaBookings: TryCatchBlock(async (req: Request, res: Response) => {
         const { page = 1, limit = 10 } = req.query;
 
-        const data = VisaBookingService.getAllVisaBookings({
+        const data = await VisaBookingService.getAllVisaBookings({
             limit: Number(limit),
             page: Number(page),
         });
@@ -44,9 +44,7 @@ export const VisaBookingController = {
         });
     }),
 
-    updateVisaBooking: TryCatchBlock(async (req: Request, res: Response) => {
-        
-    }),
+    updateVisaBooking: TryCatchBlock(async (req: Request, res: Response) => {}),
 
     deleteVisaBooking: TryCatchBlock(async (req: Request, res: Response) => {
         const { id } = req.params;

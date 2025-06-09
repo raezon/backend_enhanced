@@ -43,7 +43,7 @@ export const VisaBookingService = {
     },
 
     getAllVisaBookings: async ({ limit, page }: { page: number; limit: number }) => {
-        return visaBookingRepo.findAll({ limit, page });
+        return await visaBookingRepo.findAll({ limit, page });
     },
     requestVisa: async (
         inputData: Prisma.VisaRequestCreateInput & { visaId: string; files: Express.Multer.File[] }
