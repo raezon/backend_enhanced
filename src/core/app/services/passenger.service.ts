@@ -73,10 +73,11 @@ export const PassengerService = {
     createPassenger: async ({
         files,
         ...rest
-    }: Prisma.PassengerCreateInput & {
+    }: Omit<Prisma.PassengerCreateInput, "visaRequest" | "passengerDocuments"> & {
         files: Express.Multer.File[];
         visaRequestId: string;
     }) => {
+        // Joi schema without docs
         const createPassengerSchema = Joi.object({
             visaRequestId: Joi.string().guid({ version: "uuidv4" }).required().messages({
                 "any.required": "Visa request ID is required",
@@ -122,19 +123,22 @@ export const PassengerService = {
             phone: Joi.string().required().messages({
                 "any.required": "Phone number is required",
             }),
-
-            docs: Joi.array().items(Joi.string()).min(1).required().messages({
-                "any.required": "At least one document is required",
-                "array.base": "Docs must be an array of strings",
-                "array.min": "At least one document is required",
-            }),
         });
 
-        const { visaRequestId, ...rawData } = validateInput(createPassengerSchema, {
-            ...rest,
-            docs: files.map((file) => file.path),
-        });
+        // Validate the rest of the data (excluding files)
+        const { visaRequestId, ...validatedData } = validateInput(createPassengerSchema, rest);
 
+        // Ensure at least one file is uploaded
+        if (!files || files.length === 0) {
+            throw new ConstraintError(
+                "At least one file is required",
+                400,
+                "MISSING_FILES",
+                "You must upload at least one document"
+            );
+        }
+
+        // Check visa request exists
         const visaRequestExists = await visaBookingRepo.exists({ id: visaRequestId });
 
         if (!visaRequestExists) {
@@ -142,14 +146,15 @@ export const PassengerService = {
                 "Visa Request not found",
                 404,
                 "RESOURCE_NOT_FOUND",
-                `Visa Request could not found`
+                `Visa Request could not be found`
             );
         }
 
+        // Call repository
         const data = await passengerRepo.create({
             visaRequestId,
             files,
-            ...rawData,
+            ...validatedData,
         });
 
         return data;

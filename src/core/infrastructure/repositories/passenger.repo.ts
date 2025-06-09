@@ -128,17 +128,23 @@ export const passengerRepo = {
     } & Omit<Prisma.PassengerCreateInput, "visaRequest" | "passengerDocuments">) => {
         try {
             const result = await prisma.$transaction(async (tx) => {
+                // Create the passenger
                 const passenger = await tx.passenger.create({
                     data: {
                         ...passengerData,
-                        visaRequest: { connect: { id: visaRequestId } },
+                        visaRequest: {
+                            connect: {
+                                id: visaRequestId,
+                            },
+                        },
                     },
                 });
 
+                // Create each file + link in passengerDocuments
                 for (const file of files) {
                     const savedFile = await tx.passengerDocumentsFiles.create({
                         data: {
-                            filePath: file.filename, // Use sanitized filename
+                            filePath: file.filename, // stored filename only
                             fileType: file.mimetype,
                             name: file.originalname,
                         },
@@ -154,6 +160,7 @@ export const passengerRepo = {
 
                 return passenger;
             });
+
             return result;
         } catch (error) {
             console.error("Error creating passenger:", error);
