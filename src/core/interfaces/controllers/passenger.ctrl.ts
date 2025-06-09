@@ -26,7 +26,21 @@ export const PassengerController = {
         });
     }),
 
-    // createPassenger: TryCatchBlock(async (req: Request, res: Response) => {}),
+    updatePassenger: TryCatchBlock(async (req: Request, res: Response) => {
+        const { id } = req.params;
+        const files = (req.files as Express.Multer.File[]) || [];
+
+        const data = await PassengerService.updatePassenger({
+            id,
+            ...req.body,
+            files,
+        });
+
+        res.status(200).json({
+            message: "Passenger updated successfully",
+            data,
+        });
+    }),
     // createPassenger: TryCatchBlock(async (req: Request, res: Response) => {}),
     // createPassenger: TryCatchBlock(async (req: Request, res: Response) => {}),
 };

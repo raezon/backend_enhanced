@@ -52,36 +52,36 @@ export const VisaBookingService = {
 
         const visaDetailsSchema = Joi.object({
             visaId: Joi.string().guid({ version: "uuidv4" }).required().messages({
-            "string.guid": "Visa ID must be a valid UUID",
-            "any.required": "Visa ID is required",
+                "string.guid": "Visa ID must be a valid UUID",
+                "any.required": "Visa ID is required",
             }),
 
             agentName: Joi.string().required().messages({
-            "any.required": "Agent name is a required field",
+                "any.required": "Agent name is a required field",
             }),
 
             agencyName: Joi.string().required().messages({
-            "any.required": "Agency name is a required field",
+                "any.required": "Agency name is a required field",
             }),
 
             travelStartingDate: Joi.date().required().messages({
-            "any.required": "Travel starting date is required",
-            "date.base": "Invalid travel starting date format",
+                "any.required": "Travel starting date is required",
+                "date.base": "Invalid travel starting date format",
             }),
 
             groupSize: Joi.number().integer().positive().required().messages({
-            "any.required": "Group size is required",
-            "number.base": "Group size must be a number",
-            "number.positive": "Group size must be a positive number",
+                "any.required": "Group size is required",
+                "number.base": "Group size must be a number",
+                "number.positive": "Group size must be a positive number",
             }),
 
             nationality: Joi.string().required().messages({
-            "any.required": "Nationality is required",
+                "any.required": "Nationality is required",
             }),
 
-            totalPrice: Joi.string().pattern(/^\d+(\.\d{1,2})?$/).required().messages({
-            "any.required": "Total price is required",
-            "string.pattern.base": "Total price must be a valid number string",
+            totalPrice: Joi.string().required().messages({
+                "any.required": "Total price is required",
+                "string.base": "Total price must be a string",
             }),
         });
 
@@ -168,7 +168,7 @@ export const VisaBookingService = {
             nationality: Joi.string().optional(),
 
             notes: Joi.string().optional(),
-        }).min(1); 
+        }).min(1);
 
         const validatedFields = validateInput(updateSchema, updateFields);
 

@@ -7,6 +7,69 @@ import Joi from "joi";
 import { ConstraintError } from "../base/constraint-error";
 
 export const PassengerService = {
+    updatePassenger: async ({
+        id,
+        ...inputData
+    }: { id: string } & Prisma.PassengerUpdateInput & {
+            deletedDocs: any;
+            files: Express.Multer.File[];
+        }) => {
+        const existingPassenger = await passengerRepo.exists(id);
+        if (!existingPassenger) {
+            console.error(`Passenger not found`);
+            throw new ConstraintError(
+                "Passenger not found",
+                404,
+                "RESOURCE_NOT_FOUND",
+                `Passenger could not be found`
+            );
+        }
+
+        const { deletedDocs, files } = inputData;
+
+        let parsedDeletedDocs: string[] = [];
+        if (deletedDocs) {
+            try {
+                parsedDeletedDocs = Array.isArray(deletedDocs)
+                    ? (deletedDocs as string[])
+                    : JSON.parse(deletedDocs as string);
+            } catch (parseErr) {
+                console.error("Invalid deletedDocs format:", deletedDocs);
+                throw new ConstraintError(
+                    "Invalid deletedDocs format",
+                    400,
+                    "INVALID_INPUT",
+                    "deletedDocs must be a valid JSON array of document IDs"
+                );
+            }
+        }
+
+        if (files.length === 0 && parsedDeletedDocs.length === 0) {
+            console.error("No files to add or delete provided for update");
+            throw new ConstraintError(
+                "Nothing to update",
+                400,
+                "MISSING_DOCUMENTS",
+                "You must provide at least one new file (documents) or a deletedDocs array"
+            );
+        }
+
+        const dateFields = ["dateOfBirth", "passportDeliveryDate", "passportExpirationDate"];
+        for (const field of dateFields) {
+            if (inputData[field]) {
+                inputData[field] = new Date(inputData[field] as string);
+            }
+        }
+
+        const updatedPassenger = await passengerRepo.update(id, {
+            ...inputData,
+            files,
+            deletedDocs: parsedDeletedDocs,
+        });
+
+        return updatedPassenger;
+    },
+
     createPassenger: async ({
         files,
         ...rest
