@@ -15,7 +15,17 @@ export const PassengerController = {
             data,
         });
     }),
-    // createPassenger: TryCatchBlock(async (req: Request, res: Response) => {}),
+
+    deletePassenger: TryCatchBlock(async (req: Request, res: Response) => {
+        const { id } = req.params;
+
+        await PassengerService.deletePassenger(id);
+
+        res.status(200).json({
+            message: "Passenger deleted successfully",
+        });
+    }),
+
     // createPassenger: TryCatchBlock(async (req: Request, res: Response) => {}),
     // createPassenger: TryCatchBlock(async (req: Request, res: Response) => {}),
     // createPassenger: TryCatchBlock(async (req: Request, res: Response) => {}),
