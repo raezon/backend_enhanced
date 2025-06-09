@@ -4,18 +4,11 @@ import { visaRepo } from "@/core/infrastructure/repositories/visa.repo";
 import { validate as isValidUuid } from "uuid";
 import { visaBookingRepo } from "@/core/infrastructure/repositories/visa-booking.repo";
 import { passengerRepo } from "@/core/infrastructure/repositories/passenger.repo";
+import Joi from "joi";
+import { validateInput } from "@/utils/validate-input";
 
 export const VisaBookingService = {
-    getVisaBookingById: async ({ id }: { id: string | undefined }) => {
-        if (!id || typeof id !== "string" || id.trim() === "" || !isValidUuid(id)) {
-            throw new ConstraintError(
-                "Invalid ID format",
-                400,
-                "VALIDATION_ERROR",
-                "Visa ID must be a valid UUID"
-            );
-        }
-
+    getVisaBookingById: async ({ id }: { id: string }) => {
         const data = await visaBookingRepo.findOne({
             id,
         });
@@ -55,57 +48,47 @@ export const VisaBookingService = {
     requestVisa: async (
         inputData: Prisma.VisaRequestCreateInput & { visaId: string; files: Express.Multer.File[] }
     ) => {
-        const { visaId, ...rest } = inputData;
-        if (!visaId || typeof visaId !== "string" || visaId.trim() === "" || !isValidUuid(visaId)) {
-            throw new ConstraintError(
-                "Visa ID validation failed",
-                400,
-                "INVALID_INPUT",
-                "Visa ID must be provided as a non-empty string"
-            );
-        }
+        const { files, ...rawData } = inputData;
 
-        const requiredFields = [
-            "agentName",
-            "agencyName",
-            "travelStartingDate",
-            "groupSize",
-            "nationality",
-            "totalPrice",
-        ];
+        const visaDetailsSchema = Joi.object({
+            visaId: Joi.string().guid({ version: "uuidv4" }).required().messages({
+                "string.guid": "Visa ID must be a valid UUID",
+                "any.required": "Visa ID is required",
+            }),
 
-        for (const field of requiredFields) {
-            if (rest[field] === undefined) {
-                throw new ConstraintError(
-                    "Missing required field",
-                    400,
-                    "MISSING_REQUIRED_FIELD",
-                    `${field} is a required field`
-                );
-            }
-        }
+            agentName: Joi.string().required().messages({
+                "any.required": "Agent name is a required field",
+            }),
 
-        const groupSizeNum = rest.groupSize;
-        if (isNaN(groupSizeNum) || groupSizeNum <= 0) {
-            throw new ConstraintError(
-                "Invalid group size",
-                400,
-                "VALIDATION_ERROR",
-                "Group size must be a positive integer"
-            );
-        }
+            agencyName: Joi.string().required().messages({
+                "any.required": "Agency name is a required field",
+            }),
 
-        const travelDate = new Date(rest.travelStartingDate);
-        if (isNaN(travelDate.getTime())) {
-            throw new ConstraintError(
-                "Invalid date",
-                400,
-                "INVALID_DATE",
-                "travelStartingDate must be a valid ISO date"
-            );
-        }
+            travelStartingDate: Joi.date().required().messages({
+                "any.required": "Travel starting date is required",
+                "date.base": "Invalid travel starting date format",
+            }),
 
-        const documentFiles = (rest.files as Express.Multer.File[]) || [];
+            groupSize: Joi.number().integer().positive().required().messages({
+                "any.required": "Group size is required",
+                "number.base": "Group size must be a number",
+                "number.positive": "Group size must be a positive number",
+            }),
+
+            nationality: Joi.string().required().messages({
+                "any.required": "Nationality is required",
+            }),
+
+            totalPrice: Joi.number().positive().required().messages({
+                "any.required": "Total price is required",
+                "number.positive": "Total price must be a positive number",
+            }),
+        });
+
+        const validatedInput = validateInput(visaDetailsSchema, rawData);
+        const { visaId, ...rest } = validatedInput;
+
+        const documentFiles = files || [];
         const documentPaths = documentFiles.map((file) => file.path);
 
         const visaExists = await visaRepo.exists({ id: visaId });
@@ -120,23 +103,15 @@ export const VisaBookingService = {
         }
 
         const data = await visaBookingRepo.create({
-            ...inputData,
+            ...rest,
+            visaId,
             documents: documentPaths,
         });
 
         return data;
     },
 
-    deleteVisaRequest: async ({ id }: { id: string | undefined }) => {
-        if (!id || typeof id !== "string" || id.trim() === "" || !isValidUuid(id)) {
-            throw new ConstraintError(
-                "Invalid ID format",
-                400,
-                "VALIDATION_ERROR",
-                "Visa ID must be a valid UUID"
-            );
-        }
-
+    deleteVisaRequest: async ({ id }: { id: string }) => {
         const data = await visaBookingRepo.findOne({
             id,
         });
@@ -155,11 +130,12 @@ export const VisaBookingService = {
         });
     },
 
-    updateVisa: async (
+    updateVisaRequest: async (
         inputData: Prisma.VisaRequestUpdateInput & { visaId: string; id: string }
     ) => {
-        const { visaId, id, ...rest } = inputData;
-        if (!visaId || typeof visaId !== "string" || visaId.trim() === "" || !isValidUuid(visaId)) {
+        const { visaId, id, ...updateFields } = inputData;
+
+        if (!isValidUuid(visaId)) {
             throw new ConstraintError(
                 "Invalid ID format",
                 400,
@@ -168,41 +144,53 @@ export const VisaBookingService = {
             );
         }
 
-        if (
-            typeof inputData !== "object" ||
-            inputData === null ||
-            Object.keys(inputData).length === 0
-        ) {
+        if (Object.keys(updateFields).length === 0) {
             throw new ConstraintError(
                 "Invalid request body",
                 400,
                 "INVALID_REQUEST_BODY",
-                "Request body must be a non-empty object with update fields"
+                "Request body must contain at least one update field"
             );
         }
 
-        const allowedFields = ["travelStartingDate", "status", "nationality", "notes"];
+        const updateSchema = Joi.object({
+            travelStartingDate: Joi.date().optional().messages({
+                "date.base": "Travel starting date must be a valid date",
+            }),
 
-        const invalidFields = Object.keys(rest).filter((field) => !allowedFields.includes(field));
+            status: Joi.string()
+                .valid("Pending", "Processing", "Done", "Cancelled")
+                .optional()
+                .messages({
+                    "any.only": "Status must be one of: Pending, Processing, Done, Cancelled",
+                }),
 
-        if (invalidFields.length > 0) {
-            throw new ConstraintError(
-                "Invalid fields in request",
-                400,
-                "INVALID_FIELDS",
-                `The following fields cannot be updated: ${invalidFields.join(", ")}`
-            );
-        }
+            nationality: Joi.string().optional(),
 
-        const isExist = await visaBookingRepo.exists({ id });
+            notes: Joi.string().optional(),
+        }).min(1); 
 
-        if (!isExist) {
+        const validatedFields = validateInput(updateSchema, updateFields);
+
+        const visaRequestExists = await visaBookingRepo.exists({ id });
+        if (!visaRequestExists) {
             throw new ConstraintError(
                 "Visa request not found",
                 404,
                 "RESOURCE_NOT_FOUND",
-                `This Visa request does not exist`
+                `Visa request with ID ${id} does not exist`
             );
         }
+
+        if (validatedFields.status === "Processing") {
+            validatedFields.startedAt = new Date();
+        }
+
+        if (["Done", "Cancelled"].includes(validatedFields.status || "")) {
+            validatedFields.confirmedAt = new Date();
+        }
+
+        const updated = await visaBookingRepo.update({ id, ...validatedFields });
+        return updated;
     },
 };
