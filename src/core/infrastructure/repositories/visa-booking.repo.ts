@@ -120,7 +120,7 @@ export const visaBookingRepo = {
         }
 
         const result = data.map((item) => ({
-            id: item.visaRequest.id,
+            id: item.id,
             agencyName: item.visaRequest.agencyName,
             agentName: item.visaRequest.agentName,
             country: item.visa.country,
