@@ -51,10 +51,6 @@ export const VisaBookingService = {
         const { files, ...rawData } = inputData;
 
         const visaDetailsSchema = Joi.object({
-            visaId: Joi.string().guid({ version: "uuidv4" }).required().messages({
-                "string.guid": "Visa ID must be a valid UUID",
-                "any.required": "Visa ID is required",
-            }),
 
             agentName: Joi.string().required().messages({
                 "any.required": "Agent name is a required field",

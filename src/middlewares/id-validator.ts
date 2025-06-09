@@ -12,7 +12,7 @@ export const idValidator =
                 `${label} validation failed`,
                 400,
                 "VALIDATION_ERROR",
-                `${label} must be a valid non-empty cuid`
+                `${label} must be a valid non-empty uuid`
             );
         }
 
