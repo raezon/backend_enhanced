@@ -63,6 +63,18 @@ export const userRepo = {
         const users = await prisma.user.findMany({
             skip,
             take: limit,
+            select: {
+                adminActive: true,
+                id: true,
+                createdAt: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+                phoneNumber: true,
+                role: true,
+                userRoles: true,
+                connection_from_outside: true,
+            },
         });
 
         return users;

@@ -1,5 +1,6 @@
 import { Env } from "@/config";
 import { TryCatchBlock } from "@/core/app/base/try-catch-block";
+import { RequestWithAuth } from "@/core/app/base/types";
 import { AuthService } from "@/core/app/services/auth.service";
 import { UserService } from "@core/app/services/user.service";
 import { Request, Response } from "express";
@@ -88,7 +89,7 @@ export const UserController = {
         });
         res.status(200).json({
             message: "User signed in successfully",
-            data: { accessToken },
+            data: { accessToken, ...(req as RequestWithAuth).user },
         });
     }),
 };
