@@ -78,7 +78,6 @@ export const visaBookingRepo = {
                 },
             },
         });
-
         return result;
     },
 
