@@ -133,16 +133,7 @@ export const VisaBookingService = {
     updateVisaRequest: async (
         inputData: Prisma.VisaRequestUpdateInput & { visaId: string; id: string }
     ) => {
-        const { visaId, id, ...updateFields } = inputData;
-
-        if (!isValidUuid(visaId)) {
-            throw new ConstraintError(
-                "Invalid ID format",
-                400,
-                "VALIDATION_ERROR",
-                "Visa ID must be a valid UUID"
-            );
-        }
+        const { id, ...updateFields } = inputData;
 
         if (Object.keys(updateFields).length === 0) {
             throw new ConstraintError(

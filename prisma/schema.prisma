@@ -27,6 +27,73 @@ model Hotel{
   // minPricePerNight      Float //
   // maxPricePerNight      Float  both are not used in the new design
 }
+
+
+
+model PricePerPerson {
+  id              String @id @default(uuid())
+  packageId       String
+  displayName     String
+  name            String
+  priceAdult      Float
+  priceChild6To11 Float
+  priceChild2To5  Float
+  priceInfant     Float
+  markupPlatform  Int?   @default(0)
+  markupAgency    Int?   @default(0)
+
+  user Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
+
+  @@unique([packageId, displayName])
+}
+
+enum PackageType {
+  VACATION
+  OMRA
+  HADJ
+}
+
+model Package {
+  id                String      @id @default(uuid())
+  userId            String
+  name              String
+  isRecommended     Boolean     @default(false)
+  displayName       String
+  option            Float
+  priority          Int         @default(0)
+  departureCity     String
+  type              PackageType @default(VACATION)
+  shortDescription  String
+  description       String?
+  importantNote     String?
+  employmentContact String?
+  inclusion         String?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  departures      Departure[]
+  destinations    Destination[]
+  pricePerPersons PricePerPerson[]
+}
+
+model Departure {
+  id            String  @id @default(uuid())
+  packageId     String
+  departureCity String
+  package       Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
+
+  @@unique([packageId, departureCity])
+}
+
+model Destination {
+  id            String  @id @default(uuid())
+  packageId     String
+  departureCity String
+  package       Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
+
+  @@unique([packageId, departureCity])
+}
 model User {
   id           String      @id @default(uuid())
   firstName    String
@@ -47,6 +114,7 @@ model User {
   agency       String?      // FK to AgencyInfos.id
 
   userRoles  UserRole[]
+    packages  Package[]
 }
 
 model AgencyInfos {

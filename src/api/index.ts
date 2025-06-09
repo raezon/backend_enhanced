@@ -1,3 +1,4 @@
+import packageRoutes from "./routes/package";
 import passengerRoutes from "./routes/passenger";
 import permissionRoutes from "./routes/permission";
 import roleRoutes from "./routes/role";
@@ -22,3 +23,5 @@ router.use("/role", roleRoutes);
 router.use("/permission", permissionRoutes);
 
 router.use("/passenger", passengerRoutes);
+
+router.use("/package", packageRoutes);
