@@ -46,12 +46,11 @@ export const VisaBookingController = {
 
     updateVisaBooking: TryCatchBlock(async (req: Request, res: Response) => {
         const { id } = req.params;
-        const files = req.files;
+        // const files = req.files;
 
         const data = await VisaBookingService.updateVisaRequest({
             id,
             ...req.body,
-            files,
         });
 
         res.status(200).json({

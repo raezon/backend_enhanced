@@ -2,20 +2,34 @@ import { prisma } from "@/config";
 import { Prisma } from "@prisma/client";
 
 export const visaBookingRepo = {
-    update: async (inputData: Prisma.VisaRequestUpdateInput & { visaId: string; id: string }) => {
-        const { id, ...updateFields } = inputData;
-
-        return await prisma.$transaction(async (tx) => {
-            const updatedVisaRequest = await tx.visaRequest.update({
-                where: { id },
-                data: {
-                    ...updateFields,
+    update: async ({
+        id,
+        visaId,
+        pivotId,
+        ...rest
+    }: Prisma.VisaRequestUpdateInput & {
+        id: string;
+        visaId: string | undefined;
+        pivotId: string;
+    }) => {
+        if (visaId) {
+            await prisma.visaRequestPivot.update({
+                where: {
+                    visaRequestId: id,
+                    id: pivotId,
                 },
-                select: {
-                    id: true,
+
+                data: {
+                    visaId,
                 },
             });
-            return updatedVisaRequest;
+        }
+
+        await prisma.visaRequest.update({
+            where: {
+                id,
+            },
+            data: rest,
         });
     },
 
@@ -27,6 +41,19 @@ export const visaBookingRepo = {
         });
 
         return count > 0;
+    },
+
+    findOnePivot: async ({ id }: { id: string }) => {
+        // request visa pivot id
+
+        return await prisma.visaRequestPivot.findUnique({
+            where: {
+                id,
+            },
+            include: {
+                visaRequest: true,
+            },
+        });
     },
 
     delete: async ({ id }: { id: string }) => {

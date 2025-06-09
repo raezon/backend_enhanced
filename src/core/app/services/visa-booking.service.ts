@@ -128,8 +128,6 @@ export const VisaBookingService = {
     updateVisaRequest: async (
         inputData: Prisma.VisaRequestUpdateInput & {
             id: string;
-            files: Express.Multer.File[];
-            visaRequestId: string;
         }
     ) => {
         const { id, ...updateFields } = inputData;
@@ -149,24 +147,19 @@ export const VisaBookingService = {
             nationality: Joi.string().optional(),
 
             notes: Joi.string().optional(),
-            visaRequestId: Joi.string().optional().messages({
-                "string.base": "Visa request ID must be a string",
-                "string.empty": "Visa request ID cannot be empty",
-                "string.uuid": "Visa request ID must be a valid UUID",
-            }),
         }).min(1);
 
         const validatedFields = validateInput(updateSchema, updateFields);
 
-        const visaRequestExists = await visaBookingRepo.exists({
-            id: validatedFields.visaRequestId,
+        const visaRequest = await visaBookingRepo.findOnePivot({
+            id,
         });
-        if (!visaRequestExists) {
+        if (!visaRequest) {
             throw new ConstraintError(
                 "Visa request not found",
                 404,
                 "RESOURCE_NOT_FOUND",
-                `Visa request with ID ${id} does not exist`
+                `This Visa request does not exist`
             );
         }
 
@@ -178,7 +171,11 @@ export const VisaBookingService = {
             validatedFields.confirmedAt = new Date();
         }
 
-        const updated = await visaBookingRepo.update({ id, ...validatedFields });
+        const updated = await visaBookingRepo.update({
+            id: visaRequest.id,
+            pivotId: id,
+            ...validatedFields,
+        });
         return updated;
     },
 };
