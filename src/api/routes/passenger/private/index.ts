@@ -8,6 +8,6 @@ const { createPassenger, deletePassenger, updatePassenger } = PassengerControlle
 
 router.post("/", fileUploadMiddleware, createPassenger);
 router.delete("/:id", idValidator("id", "Passenger ID"), deletePassenger);
-router.delete("/:id", idValidator("id", "Passenger ID"), fileUploadMiddleware, updatePassenger);
+router.put("/:id", idValidator("id", "Passenger ID"), fileUploadMiddleware, updatePassenger);
 
 export default router;
