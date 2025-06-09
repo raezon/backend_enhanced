@@ -34,7 +34,7 @@ export const visaBookingRepo = {
     },
 
     exists: async ({ id }: { id: string }) => {
-        const count = await prisma.visaRequest.count({
+        const count = await prisma.visaRequestPivot.count({
             where: {
                 id,
             },
