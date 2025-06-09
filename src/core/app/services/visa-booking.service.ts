@@ -51,7 +51,6 @@ export const VisaBookingService = {
         const { files, ...rawData } = inputData;
 
         const visaDetailsSchema = Joi.object({
-
             agentName: Joi.string().required().messages({
                 "any.required": "Agent name is a required field",
             }),
@@ -126,19 +125,10 @@ export const VisaBookingService = {
         });
     },
 
-    updateVisaRequest: async (
-        inputData: Prisma.VisaRequestUpdateInput & { visaId: string; id: string }
-    ) => {
+    updateVisaRequest: async (inputData: Prisma.VisaRequestUpdateInput & { id: string }) => {
         const { id, ...updateFields } = inputData;
 
-        if (Object.keys(updateFields).length === 0) {
-            throw new ConstraintError(
-                "Invalid request body",
-                400,
-                "INVALID_REQUEST_BODY",
-                "Request body must contain at least one update field"
-            );
-        }
+        console.log("Update Fields:", inputData);
 
         const updateSchema = Joi.object({
             travelStartingDate: Joi.date().optional().messages({
