@@ -44,7 +44,21 @@ export const VisaBookingController = {
         });
     }),
 
-    updateVisaBooking: TryCatchBlock(async (req: Request, res: Response) => {}),
+    updateVisaBooking: TryCatchBlock(async (req: Request, res: Response) => {
+        const { id } = req.params;
+        const files = req.files;
+
+        const data = await VisaBookingService.updateVisaRequest({
+            id,
+            ...req.body,
+            files,
+        });
+
+        res.status(200).json({
+            message: "Visa booking updated successfully",
+            data,
+        });
+    }),
 
     deleteVisaBooking: TryCatchBlock(async (req: Request, res: Response) => {
         const { id } = req.params;
