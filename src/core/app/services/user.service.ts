@@ -20,7 +20,30 @@ export const UserService = {
                 "string.min": "Password must be at least 6 characters",
             }),
         });
-        const { password, email } = validateInput<{ password: string; email: string }>(schema, inputData);
+        const { password, email } = validateInput<{ password: string; email: string }>(
+            schema,
+            inputData
+        );
+
+        const isUser = await userRepo.findUserByEmail({ email });
+
+        if (!isUser) {
+            throw new ConstraintError(
+                "User not found",
+                404,
+                "RESOURCE_NOT_FOUND",
+                `This USER could not be found`
+            );
+        }
+
+        if (isUser.user.userActive) {
+            throw new ConstraintError(
+                "User already active",
+                400,
+                "USER_ALREADY_ACTIVE",
+                "This USER is already active"
+            );
+        }
 
         const user = await userRepo.updatePassword({
             email,
@@ -111,7 +134,7 @@ export const UserService = {
 
         const createInput: Prisma.UserCreateInput = {
             ...rest,
-            password:bcrypt.hashSync(password, 10),
+            password: bcrypt.hashSync(password, 10),
             agencyInfo: {
                 connect: {
                     id: agencyId,

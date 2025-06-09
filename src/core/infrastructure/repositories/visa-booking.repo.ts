@@ -2,7 +2,7 @@ import { prisma } from "@/config";
 import { Prisma } from "@prisma/client";
 
 export const visaBookingRepo = {
-    update: async (        inputData: Prisma.VisaRequestUpdateInput & { visaId: string; id: string }) => {},
+    update: async (inputData: Prisma.VisaRequestUpdateInput & { visaId: string; id: string }) => {},
 
     exists: async ({ id }: { id: string }) => {
         const count = await prisma.visaRequest.count({

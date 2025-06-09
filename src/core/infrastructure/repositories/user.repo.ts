@@ -10,6 +10,7 @@ export const userRepo = {
             },
             data: {
                 password,
+                userActive: true,
             },
         });
 
@@ -20,6 +21,15 @@ export const userRepo = {
         const data = await prisma.user.findUnique({
             where: {
                 username,
+            },
+        });
+
+        return data ? new User(data) : null;
+    },
+    findUserByEmail: async ({ email }: { email: string }) => {
+        const data = await prisma.user.findUnique({
+            where: {
+                email,
             },
         });
 

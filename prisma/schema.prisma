@@ -37,7 +37,7 @@ model User {
   role         String
   phoneNumber  String
   address      String?
-  userActive   Boolean     @default(true)
+  userActive   Boolean     @default(false)
   adminActive  Boolean     @default(true)
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
