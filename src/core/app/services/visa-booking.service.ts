@@ -154,6 +154,7 @@ export const VisaBookingService = {
         const visaRequest = await visaBookingRepo.findOnePivot({
             id,
         });
+
         if (!visaRequest) {
             throw new ConstraintError(
                 "Visa request not found",
@@ -171,11 +172,14 @@ export const VisaBookingService = {
             validatedFields.confirmedAt = new Date();
         }
 
+        console.log("over here ", "6ec7f85c-fa44-4a8c-8c2a-159dcf75a4b4" === id);
+
         const updated = await visaBookingRepo.update({
-            id: visaRequest.id,
+            id: visaRequest.visaRequest.id,
             pivotId: id,
             ...validatedFields,
         });
+
         return updated;
     },
 };

@@ -25,6 +25,8 @@ export const visaBookingRepo = {
             });
         }
 
+        console.log("over here 2", "6ec7f85c-fa44-4a8c-8c2a-159dcf75a4b4" === id);
+
         await prisma.visaRequest.update({
             where: {
                 id,
