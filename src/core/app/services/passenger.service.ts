@@ -77,6 +77,8 @@ export const PassengerService = {
         files: Express.Multer.File[];
         visaRequestId: string;
     }) => {
+        console.debug("[PassengerService] createPassenger called", { filesCount: files?.length, ...rest });
+
         // Joi schema without docs
         const createPassengerSchema = Joi.object({
             visaRequestId: Joi.string().guid({ version: "uuidv4" }).required().messages({
@@ -126,10 +128,18 @@ export const PassengerService = {
         });
 
         // Validate the rest of the data (excluding files)
-        const { visaRequestId, ...validatedData } = validateInput(createPassengerSchema, rest);
+        let visaRequestId, validatedData;
+        try {
+            ({ visaRequestId, ...validatedData } = validateInput(createPassengerSchema, rest));
+            console.debug("[PassengerService] Input validated", { visaRequestId, validatedData });
+        } catch (err) {
+            console.error("[PassengerService] Input validation failed", err);
+            throw err;
+        }
 
         // Ensure at least one file is uploaded
         if (!files || files.length === 0) {
+            console.error("[PassengerService] No files uploaded");
             throw new ConstraintError(
                 "At least one file is required",
                 400,
@@ -139,9 +149,11 @@ export const PassengerService = {
         }
 
         // Check visa request exists
+        console.debug("[PassengerService] Checking visa request existence", { visaRequestId });
         const visaRequestExists = await visaBookingRepo.exists({ id: visaRequestId });
 
         if (!visaRequestExists) {
+            console.error("[PassengerService] Visa Request not found", { visaRequestId });
             throw new ConstraintError(
                 "Visa Request not found",
                 404,
@@ -151,12 +163,14 @@ export const PassengerService = {
         }
 
         // Call repository
+        console.debug("[PassengerService] Creating passenger", { visaRequestId, validatedData, filesCount: files.length });
         const data = await passengerRepo.create({
             visaRequestId,
             files,
             ...validatedData,
         });
 
+        console.debug("[PassengerService] Passenger created", { passengerId: data?.id });
         return data;
     },
 

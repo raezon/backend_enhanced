@@ -140,6 +140,8 @@ export const passengerRepo = {
                     },
                 });
 
+                console.log("Passenger created:", passenger);
+
                 // Create each file + link in passengerDocuments
                 for (const file of files) {
                     const savedFile = await tx.passengerDocumentsFiles.create({
@@ -149,13 +151,15 @@ export const passengerRepo = {
                             name: file.originalname,
                         },
                     });
-
-                    await tx.passengerDocuments.create({
+                    console.log("File saved:", savedFile);
+                    const doc = await tx.passengerDocuments.create({
                         data: {
                             passengerId: passenger.id,
                             documentId: savedFile.id,
                         },
                     });
+
+                    console.log("Document created:", doc);
                 }
 
                 return passenger;

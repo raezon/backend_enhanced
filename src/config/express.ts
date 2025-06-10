@@ -12,6 +12,7 @@ import cookieParser from "cookie-parser";
 
 const createApp = async (): Promise<Application> => {
     const App: Application = express();
+    App.use("/uploads/documents", express.static(process.cwd() + "/uploads/documents"));
 
     // if (ENV.NODE_ENV !== "test") {
     //     try {
@@ -56,7 +57,7 @@ const createApp = async (): Promise<Application> => {
             origin: true, // Reflects the request origin
             credentials: true,
             allowedHeaders: [ENV.TOKEN_HIDEOUT, "Content-Type", "Authorization"],
-            methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS" , "PATCH"],
+            methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
             maxAge: 86400,
         })
     );
