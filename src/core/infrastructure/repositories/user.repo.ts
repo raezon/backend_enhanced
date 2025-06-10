@@ -80,6 +80,7 @@ export const userRepo = {
             skip,
             take: limit,
             select: {
+                username: true,
                 adminActive: true,
                 id: true,
                 createdAt: true,
