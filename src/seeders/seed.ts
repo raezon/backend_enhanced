@@ -86,7 +86,7 @@ async function seedSuperAdminUser() {
     }
 
     const existingUser = await prisma.user.findUnique({
-        where: { username: "super_admin" },
+        where: { username: "superadmin" },
     });
 
     if (!existingUser) {
@@ -96,7 +96,7 @@ async function seedSuperAdminUser() {
             data: {
                 firstName: "John",
                 lastName: "Doe",
-                username: "super_admin",
+                username: "superadmin",
                 email: "superadmin@example.com",
                 password: hashedPassword,
                 phoneNumber: "0606060606",

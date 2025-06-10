@@ -1,3 +1,6 @@
+-- CreateEnum
+CREATE TYPE "PackageType" AS ENUM ('VACATION', 'OMRA', 'HADJ');
+
 -- CreateTable
 CREATE TABLE "Hotel" (
     "id" TEXT NOT NULL,
@@ -21,6 +24,62 @@ CREATE TABLE "Hotel" (
 );
 
 -- CreateTable
+CREATE TABLE "PricePerPerson" (
+    "id" TEXT NOT NULL,
+    "packageId" TEXT NOT NULL,
+    "displayName" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "priceAdult" DOUBLE PRECISION NOT NULL,
+    "priceChild6To11" DOUBLE PRECISION NOT NULL,
+    "priceChild2To5" DOUBLE PRECISION NOT NULL,
+    "priceInfant" DOUBLE PRECISION NOT NULL,
+    "markupPlatform" INTEGER DEFAULT 0,
+    "markupAgency" INTEGER DEFAULT 0,
+
+    CONSTRAINT "PricePerPerson_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Package" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "isRecommended" BOOLEAN NOT NULL DEFAULT false,
+    "displayName" TEXT NOT NULL,
+    "option" DOUBLE PRECISION NOT NULL,
+    "priority" INTEGER NOT NULL DEFAULT 0,
+    "departureCity" TEXT NOT NULL,
+    "type" "PackageType" NOT NULL DEFAULT 'VACATION',
+    "shortDescription" TEXT NOT NULL,
+    "description" TEXT,
+    "importantNote" TEXT,
+    "employmentContact" TEXT,
+    "inclusion" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Package_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Departure" (
+    "id" TEXT NOT NULL,
+    "packageId" TEXT NOT NULL,
+    "departureCity" TEXT NOT NULL,
+
+    CONSTRAINT "Departure_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Destination" (
+    "id" TEXT NOT NULL,
+    "packageId" TEXT NOT NULL,
+    "departureCity" TEXT NOT NULL,
+
+    CONSTRAINT "Destination_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
     "firstName" TEXT NOT NULL,
@@ -28,10 +87,10 @@ CREATE TABLE "User" (
     "username" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "password" TEXT NOT NULL,
-    "role" TEXT NOT NULL,
+    "roleId" TEXT NOT NULL,
     "phoneNumber" TEXT NOT NULL,
     "address" TEXT,
-    "userActive" BOOLEAN NOT NULL DEFAULT true,
+    "userActive" BOOLEAN NOT NULL DEFAULT false,
     "adminActive" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -76,9 +135,6 @@ CREATE TABLE "Logo" (
 -- CreateTable
 CREATE TABLE "Accounting" (
     "id" TEXT NOT NULL,
-    "localCurrency" TEXT NOT NULL,
-    "localDepositBalance" DOUBLE PRECISION NOT NULL DEFAULT 0,
-    "agencyCommissionHotel" DOUBLE PRECISION NOT NULL,
     "agencyCommissionLowCoTick" DOUBLE PRECISION NOT NULL,
     "hideEtickectPrice" BOOLEAN NOT NULL DEFAULT false,
     "hideHotelVoucherPrice" BOOLEAN NOT NULL DEFAULT false,
@@ -157,18 +213,6 @@ CREATE TABLE "RolePermissions" (
     "permissionId" TEXT NOT NULL,
 
     CONSTRAINT "RolePermissions_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "UserRole" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "roleId" TEXT NOT NULL,
-    "expiresAt" TIMESTAMP(3),
-    "reason" BYTEA,
-    "assignedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "UserRole_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -312,6 +356,15 @@ CREATE TABLE "ServiceFeesAccounting" (
 );
 
 -- CreateIndex
+CREATE UNIQUE INDEX "PricePerPerson_packageId_displayName_key" ON "PricePerPerson"("packageId", "displayName");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Departure_packageId_departureCity_key" ON "Departure"("packageId", "departureCity");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Destination_packageId_departureCity_key" ON "Destination"("packageId", "departureCity");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "User_username_key" ON "User"("username");
 
 -- CreateIndex
@@ -339,12 +392,6 @@ CREATE UNIQUE INDEX "Permission_identifier_key" ON "Permission"("identifier");
 CREATE UNIQUE INDEX "RolePermissions_roleId_permissionId_key" ON "RolePermissions"("roleId", "permissionId");
 
 -- CreateIndex
-CREATE INDEX "UserRole_expiresAt_idx" ON "UserRole"("expiresAt");
-
--- CreateIndex
-CREATE UNIQUE INDEX "UserRole_userId_roleId_key" ON "UserRole"("userId", "roleId");
-
--- CreateIndex
 CREATE UNIQUE INDEX "Country_name_key" ON "Country"("name");
 
 -- CreateIndex
@@ -354,7 +401,22 @@ CREATE INDEX "visa_countryId_idx" ON "Visa"("countryId");
 CREATE UNIQUE INDEX "PassengerDocuments_passengerId_documentId_key" ON "PassengerDocuments"("passengerId", "documentId");
 
 -- AddForeignKey
+ALTER TABLE "PricePerPerson" ADD CONSTRAINT "PricePerPerson_packageId_fkey" FOREIGN KEY ("packageId") REFERENCES "Package"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Package" ADD CONSTRAINT "Package_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Departure" ADD CONSTRAINT "Departure_packageId_fkey" FOREIGN KEY ("packageId") REFERENCES "Package"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Destination" ADD CONSTRAINT "Destination_packageId_fkey" FOREIGN KEY ("packageId") REFERENCES "Package"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "User" ADD CONSTRAINT "User_agency_fkey" FOREIGN KEY ("agency") REFERENCES "AgencyInfos"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "User" ADD CONSTRAINT "User_roleId_fkey" FOREIGN KEY ("roleId") REFERENCES "Role"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Logo" ADD CONSTRAINT "Logo_agencyId_fkey" FOREIGN KEY ("agencyId") REFERENCES "AgencyInfos"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -376,12 +438,6 @@ ALTER TABLE "RolePermissions" ADD CONSTRAINT "RolePermissions_roleId_fkey" FOREI
 
 -- AddForeignKey
 ALTER TABLE "RolePermissions" ADD CONSTRAINT "RolePermissions_permissionId_fkey" FOREIGN KEY ("permissionId") REFERENCES "Permission"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "UserRole" ADD CONSTRAINT "UserRole_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "UserRole" ADD CONSTRAINT "UserRole_roleId_fkey" FOREIGN KEY ("roleId") REFERENCES "Role"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Visa" ADD CONSTRAINT "Visa_countryId_fkey" FOREIGN KEY ("countryId") REFERENCES "Country"("id") ON DELETE CASCADE ON UPDATE CASCADE;
