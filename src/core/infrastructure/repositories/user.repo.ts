@@ -12,6 +12,9 @@ export const userRepo = {
                 password,
                 userActive: true,
             },
+            include: {
+                role: true,
+            },
         });
 
         return new User(data);
@@ -22,6 +25,9 @@ export const userRepo = {
             where: {
                 username,
             },
+            include: {
+                role: true,
+            },
         });
 
         return data ? new User(data) : null;
@@ -30,6 +36,9 @@ export const userRepo = {
         const data = await prisma.user.findUnique({
             where: {
                 email,
+            },
+            include: {
+                role: true,
             },
         });
 
@@ -40,6 +49,10 @@ export const userRepo = {
         const data = await prisma.user.findUnique({
             where: {
                 id,
+            },
+
+            include: {
+                role: true,
             },
         });
 
@@ -53,6 +66,9 @@ export const userRepo = {
                 ...rest,
                 userActive: userActive ?? true,
                 adminActive: adminActive ?? false,
+            },
+            include: {
+                role: true,
             },
         });
         return new User(newUser);
@@ -72,7 +88,6 @@ export const userRepo = {
                 lastName: true,
                 phoneNumber: true,
                 role: true,
-                userRoles: true,
                 connection_from_outside: true,
             },
         });

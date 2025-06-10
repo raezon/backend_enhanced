@@ -93,7 +93,9 @@ export const UserService = {
 
         return users;
     },
-    createNewUser: async (inputData: Prisma.UserCreateInput & { agency: string }) => {
+    createNewUser: async (
+        inputData: Prisma.UserCreateInput & { agency: string; roleId: string }
+    ) => {
         const createUserSchema = Joi.object({
             firstName: Joi.string().required(),
             lastName: Joi.string().required(),
@@ -103,18 +105,19 @@ export const UserService = {
             address: Joi.string().required(),
             userActive: Joi.boolean().required(),
             connection_from_outside: Joi.boolean().optional().default(false),
-            role: Joi.string()
-                .valid("agency_admin", "agent", "platforme_staff", "system_admin")
-                .required(),
+            roleId: Joi.string().guid({ version: "uuidv4" }).required().messages({
+                "string.guid": "Role ID must be a valid UUID",
+            }),
             agency: Joi.string().guid({ version: "uuidv4" }).required().messages({
                 "string.guid": "Agency ID must be a valid UUID",
             }),
         });
 
-        const { agency: agencyId, ...rest } = validateInput<typeof inputData>(
-            createUserSchema,
-            inputData
-        );
+        const {
+            agency: agencyId,
+            roleId,
+            ...rest
+        } = validateInput<typeof inputData>(createUserSchema, inputData);
 
         const agencyExists = await agencyRepo.agencyExists({ id: agencyId });
 
@@ -134,6 +137,11 @@ export const UserService = {
 
         const createInput: Prisma.UserCreateInput = {
             ...rest,
+            role: {
+                connect: {
+                    id: roleId,
+                },
+            },
             password: bcrypt.hashSync(password, 10),
             agencyInfo: {
                 connect: {

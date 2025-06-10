@@ -13,9 +13,11 @@ export type User = {
     username: string;
     email: string;
     role: string;
+    roleId: string;
     createdAt: Date;
     userActive: boolean;
     adminActive: boolean;
     phoneNumber: string;
-    connection_from_outside:boolean
+    connection_from_outside: boolean;
 };
+ 

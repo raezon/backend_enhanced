@@ -1,12 +1,12 @@
 import { Entity } from "../app/base/entity";
 import bcrypt from "bcryptjs";
 import { User as UserType } from "../app/base/types";
-import { User as UserProps } from "@prisma/client";
+import { Role, User as UserProps } from "@prisma/client";
 
 export class User implements Entity {
-    user: UserProps;
+    user: UserProps & { role: Role };
 
-    constructor(user: UserProps) {
+    constructor(user: UserProps & { role: Role }) {
         this.user = user;
     }
 
@@ -26,7 +26,8 @@ export class User implements Entity {
             id: this.user.id,
             lastName: this.user.lastName,
             phoneNumber: this.user.phoneNumber,
-            role: this.user.role,
+            role: this.user.role.name,
+            roleId: this.user.role.id,
             userActive: this.user.userActive,
             username: this.user.username,
             connection_from_outside: this.user.connection_from_outside,

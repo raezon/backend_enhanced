@@ -101,7 +101,7 @@ model User {
   username     String      @unique
   email        String      @unique
   password     String
-  role         String
+  roleId       String
   phoneNumber  String
   address      String?
   userActive   Boolean     @default(false)
@@ -113,8 +113,8 @@ model User {
   agencyInfo   AgencyInfos? @relation(fields: [agency], references: [id])
   agency       String?      // FK to AgencyInfos.id
 
-  userRoles  UserRole[]
-    packages  Package[]
+  role         Role     @relation(fields: [roleId], references: [id])
+  packages  Package[]
 }
 
 model AgencyInfos {
@@ -210,7 +210,8 @@ model Role {
   deletedAt  DateTime? // For soft delete
 
   permissions RolePermissions[]
-  userRoles   UserRole[]
+  users       User[] // renamed for clarity
+
 }
 
 model Permission {
@@ -235,24 +236,6 @@ model RolePermissions {
   @@unique([roleId, permissionId]) // prevent duplicates
 }
 
-
-model UserRole {
-  id         String   @id @default(uuid())
-  userId     String
-  roleId     String
-  expiresAt  DateTime?
-  reason     Bytes?   // Can be encrypted manually
-  assignedAt DateTime @default(now())
-
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
-
-
-  //TODO: check if auser can have many roles
-  @@unique([userId, roleId]) 
-  @@index([expiresAt])
-
-}
 
  // VISA Section
 

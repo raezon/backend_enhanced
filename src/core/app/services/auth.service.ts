@@ -39,13 +39,16 @@ export const AuthService = {
                 "User not found"
             );
         }
-        const accessToken = TokenService.generateToken({ id: user.user.id }, user.user.role, "30d");
+        const accessToken = TokenService.generateToken(
+            { id: user.user.id },
+            user.user.role.name,
+            "30d"
+        );
 
         return { accessToken };
     },
 
     authUser: async (inputData: { username: string; password: string }) => {
-        
         const signInSchema = Joi.object({
             username: Joi.string().required().messages({
                 "any.required": "Username is required",
@@ -86,12 +89,12 @@ export const AuthService = {
 
         const accessToken = TokenService.generateToken(
             { id: isUser.user.id },
-            isUser.user.role,
+            isUser.user.role.name,
             "30d"
         );
         const refreshToken = TokenService.generateToken(
             { id: isUser.user.id },
-            isUser.user.role,
+            isUser.user.role.name,
             "30d"
         );
 
