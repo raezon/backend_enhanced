@@ -158,13 +158,12 @@ export const visaBookingRepo = {
 
         const result = await prisma.$transaction(async (tx) => {
             const createdVisaRequest = await tx.visaRequest.create({
-                data: {
-                    ...rest,
-                },
+                data: rest,
                 select: {
                     id: true,
                 },
             });
+
             await tx.visaRequestPivot.create({
                 data: {
                     visaId,

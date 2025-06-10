@@ -45,12 +45,12 @@ export const VisaBookingService = {
     getAllVisaBookings: async ({ limit, page }: { page: number; limit: number }) => {
         return await visaBookingRepo.findAll({ limit, page });
     },
-    requestVisa: async (
-        inputData: Prisma.VisaRequestCreateInput & { visaId: string; files: Express.Multer.File[] }
-    ) => {
-        const { files, ...rawData } = inputData;
-
+    requestVisa: async (inputData: Prisma.VisaRequestCreateInput & { visaId: string }) => {
         const visaDetailsSchema = Joi.object({
+            visaId: Joi.string().uuid().required().messages({
+                "any.required": "Visa ID is a required field",
+                "string.uuid": "Visa ID must be a valid UUID",
+            }),
             agentName: Joi.string().required().messages({
                 "any.required": "Agent name is a required field",
             }),
@@ -80,11 +80,8 @@ export const VisaBookingService = {
             }),
         });
 
-        const validatedInput = validateInput(visaDetailsSchema, rawData);
+        const validatedInput = validateInput(visaDetailsSchema, inputData);
         const { visaId, ...rest } = validatedInput;
-
-        const documentFiles = files || [];
-        const documentPaths = documentFiles.map((file) => file.path);
 
         const visaExists = await visaRepo.exists({ id: visaId });
 
@@ -100,7 +97,6 @@ export const VisaBookingService = {
         const data = await visaBookingRepo.create({
             ...rest,
             visaId,
-            documents: documentPaths,
         });
 
         return data;
@@ -171,8 +167,6 @@ export const VisaBookingService = {
         if (["Done", "Cancelled"].includes(validatedFields.status || "")) {
             validatedFields.confirmedAt = new Date();
         }
-
-        console.log("over here ", "6ec7f85c-fa44-4a8c-8c2a-159dcf75a4b4" === id);
 
         const updated = await visaBookingRepo.update({
             id: visaRequest.visaRequest.id,

@@ -5,11 +5,8 @@ import { Request, Response } from "express";
 
 export const VisaBookingController = {
     createVisaBooking: TryCatchBlock(async (req: Request, res: Response) => {
-        const files = req.files;
-
         const data = await VisaBookingService.requestVisa({
             ...req.body,
-            files,
         });
 
         res.status(201).json({
@@ -46,7 +43,6 @@ export const VisaBookingController = {
 
     updateVisaBooking: TryCatchBlock(async (req: Request, res: Response) => {
         const { id } = req.params;
-        // const files = req.files;
 
         const data = await VisaBookingService.updateVisaRequest({
             id,

@@ -285,7 +285,6 @@ model VisaRequest {
   agencyName String
   travelStartingDate DateTime
   groupSize Int
-  documents String[]
   nationality String
   totalPrice String  // total price for all passengers
   status String @default("Pending") // pending, in_progress, completed, rejected
