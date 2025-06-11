@@ -232,7 +232,7 @@ export const VisaBookingService = {
                     "any.only": "Status must be one of: Pending, Processing, Done, Cancelled",
                 }),
             nationality: Joi.string().optional(),
-            totalPrice: Joi.number().optional(),
+            totalPrice: Joi.string().optional(),
             agencyName: Joi.string().optional(),
             agentName: Joi.string().optional(),
             name: Joi.string().optional(),
