@@ -14,62 +14,110 @@ export const PassengerService = {
             deletedDocs: any;
             files: Express.Multer.File[];
         }) => {
+        console.debug("[PassengerService] updatePassenger called", { id, ...inputData });
+
+        // Check passenger existence
         const existingPassenger = await passengerRepo.exists(id);
         if (!existingPassenger) {
-            console.error(`Passenger not found`);
+            console.error(`[PassengerService] Passenger not found`, { id });
             throw new ConstraintError(
                 "Passenger not found",
                 404,
                 "RESOURCE_NOT_FOUND",
-                `Passenger could not be found`
+                `Passenger with ID ${id} does not exist`
             );
         }
 
-        const { deletedDocs, files } = inputData;
+        const { deletedDocs, files, ...rest } = inputData;
 
+        // Define Joi schema for update (all fields optional)
+        const updatePassengerSchema = Joi.object({
+            name: Joi.string().optional().messages({
+                "string.base": "Name must be a valid string",
+            }),
+            surname: Joi.string().optional().messages({
+                "string.base": "Surname must be a valid string",
+            }),
+            placeOfBirth: Joi.string().optional().messages({
+                "string.base": "Place of birth must be a valid string",
+            }),
+            dateOfBirth: Joi.date().iso().optional().messages({
+                "date.format": "Date of birth must be a valid ISO date string",
+            }),
+            passportNumber: Joi.string().optional().messages({
+                "string.base": "Passport number must be a valid string",
+            }),
+            passportDeliveryDate: Joi.date().iso().optional().messages({
+                "date.format": "Passport delivery date must be a valid ISO date string",
+            }),
+            passportExpirationDate: Joi.date().iso().optional().messages({
+                "date.format": "Passport expiration date must be a valid ISO date string",
+            }),
+            email: Joi.string().email().optional().messages({
+                "string.email": "Email must be a valid email address",
+            }),
+            phone: Joi.string().optional().messages({
+                "string.base": "Phone number must be a valid string",
+            }),
+        });
+
+        // Validate input data
+        let validatedData: Prisma.PassengerUpdateInput;
+        try {
+            validatedData = validateInput(updatePassengerSchema, rest);
+            console.debug("[PassengerService] Input validated", { validatedData });
+        } catch (err) {
+            console.error("[PassengerService] Input validation failed", err);
+            throw err;
+        }
+
+        // Parse deletedDocs if provided
         let parsedDeletedDocs: string[] = [];
         if (deletedDocs) {
             try {
                 parsedDeletedDocs = Array.isArray(deletedDocs)
-                    ? (deletedDocs as string[])
+                    ? deletedDocs
                     : JSON.parse(deletedDocs as string);
             } catch (parseErr) {
-                console.error("Invalid deletedDocs format:", deletedDocs);
+                console.error("[PassengerService] Invalid deletedDocs format", {
+                    deletedDocs,
+                    error: parseErr,
+                });
                 throw new ConstraintError(
-                    "Invalid deletedDocs format",
+                    "Invalid document format",
                     400,
-                    "INVALID_INPUT",
+                    "INVALID_DOCUMENT_FORMAT",
                     "deletedDocs must be a valid JSON array of document IDs"
                 );
             }
         }
 
-        if (files.length === 0 && parsedDeletedDocs.length === 0) {
-            console.error("No files to add or delete provided for update");
-            throw new ConstraintError(
-                "Nothing to update",
-                400,
-                "MISSING_DOCUMENTS",
-                "You must provide at least one new file (documents) or a deletedDocs array"
-            );
-        }
-
+        // Convert date fields
         const dateFields = ["dateOfBirth", "passportDeliveryDate", "passportExpirationDate"];
         for (const field of dateFields) {
-            if (inputData[field]) {
-                inputData[field] = new Date(inputData[field] as string);
+            if (validatedData[field]) {
+                validatedData[field] = new Date(validatedData[field] as string);
             }
         }
 
-        const updatedPassenger = await passengerRepo.update(id, {
-            ...inputData,
-            files,
+        // Prepare update payload
+        const updatePayload = {
+            ...validatedData,
+            files: files || [],
             deletedDocs: parsedDeletedDocs,
+        };
+
+        console.debug("[PassengerService] Updating passenger", {
+            id,
+            updatePayload: { ...updatePayload, filesCount: files?.length || 0 },
         });
+
+        // Perform update
+        const updatedPassenger = await passengerRepo.update(id, updatePayload);
+        console.debug("[PassengerService] Passenger updated successfully", { id });
 
         return updatedPassenger;
     },
-
     createPassenger: async ({
         files,
         ...rest
@@ -77,7 +125,10 @@ export const PassengerService = {
         files: Express.Multer.File[];
         visaRequestId: string;
     }) => {
-        console.debug("[PassengerService] createPassenger called", { filesCount: files?.length, ...rest });
+        console.debug("[PassengerService] createPassenger called", {
+            filesCount: files?.length,
+            ...rest,
+        });
 
         // Joi schema without docs
         const createPassengerSchema = Joi.object({
@@ -163,7 +214,11 @@ export const PassengerService = {
         }
 
         // Call repository
-        console.debug("[PassengerService] Creating passenger", { visaRequestId, validatedData, filesCount: files.length });
+        console.debug("[PassengerService] Creating passenger", {
+            visaRequestId,
+            validatedData,
+            filesCount: files.length,
+        });
         const data = await passengerRepo.create({
             visaRequestId,
             files,
