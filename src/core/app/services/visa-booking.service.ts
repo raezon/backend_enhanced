@@ -125,227 +125,214 @@ export const VisaBookingService = {
     updateVisaRequest: async (inputData: {
         basicInfos: {
             visaRequestId: string;
-            id: string;
-            country: string;
-            travelStartingDate: string | Date;
-            groupSize: number;
-            status: string;
-            nationality: string;
-            totalPrice: number;
-            agencyName: string;
-            agentName: string;
-            name: string;
-            notes: string | null;
+            id?: string;
+            country?: string;
+            travelStartingDate?: string | Date;
+            groupSize?: number;
+            status?: string;
+            nationality?: string;
+            totalPrice?: number;
+            agencyName?: string;
+            agentName?: string;
+            name?: string;
+            notes?: string | null;
         };
 
-        passengers: ({
-            passengerDocuments: ({
-                passengerDocumentsFiles: {
-                    id: string;
-                    deletedAt: Date;
-                    name: string;
-                    filePath: string;
-                    fileType: string;
-                    uploadedAt: Date;
+        passengers?: ({
+            passengerDocuments?: ({
+                passengerDocumentsFiles?: {
+                    id?: string;
+                    deletedAt?: Date;
+                    name?: string;
+                    filePath?: string;
+                    fileType?: string;
+                    uploadedAt?: Date;
                 };
             } & {
-                id: string;
-                createdAt: Date;
-                passengerId: string;
-                documentId: string;
-                label: string | null;
-                isMendatory: boolean | null;
+                id?: string;
+                createdAt?: Date;
+                passengerId?: string;
+                documentId?: string;
+                label?: string | null;
+                isMendatory?: boolean | null;
             })[];
         } & {
-            id: string;
-            notes: string | null;
-            createdAt: Date;
-            updatedAt: Date;
-            deletedAt: Date | null;
-            visaRequestId: string;
-            name: string;
-            surname: string;
-            placeOfBirth: string;
-            dateOfBirth: Date;
-            passportNumber: string;
-            passportDeliveryDate: Date;
-            passportExpirationDate: Date;
-            email: string;
-            phone: string;
+            id?: string;
+            notes?: string | null;
+            createdAt?: Date;
+            updatedAt?: Date;
+            deletedAt?: Date | null;
+            visaRequestId?: string;
+            name?: string;
+            surname?: string;
+            placeOfBirth?: string;
+            dateOfBirth?: Date;
+            passportNumber?: string;
+            passportDeliveryDate?: Date;
+            passportExpirationDate?: Date;
+            email?: string;
+            phone?: string;
         })[];
 
         id: string;
     }) => {
+        // Updated validation schemas with optional fields
         const passengerDocumentFileSchema = Joi.object({
-            id: Joi.string().required(),
-            deletedAt: Joi.date().required(),
-            name: Joi.string().required(),
-            filePath: Joi.string().required(),
-            fileType: Joi.string().required(),
-            uploadedAt: Joi.date().required(),
+            id: Joi.string().optional(),
+            deletedAt: Joi.date().optional(),
+            name: Joi.string().optional(),
+            filePath: Joi.string().optional(),
+            fileType: Joi.string().optional(),
+            uploadedAt: Joi.date().optional(),
         });
 
         const passengerDocumentSchema = Joi.object({
-            id: Joi.string().required(),
-            createdAt: Joi.date().required(),
-            passengerId: Joi.string().required(),
-            documentId: Joi.string().required(),
-            label: Joi.string().allow(null),
-            isMendatory: Joi.boolean().allow(null),
-            passengerDocumentsFiles: passengerDocumentFileSchema.required(),
+            id: Joi.string().optional(),
+            createdAt: Joi.date().optional(),
+            passengerId: Joi.string().optional(),
+            documentId: Joi.string().optional(),
+            label: Joi.string().allow(null).optional(),
+            isMendatory: Joi.boolean().allow(null).optional(),
+            passengerDocumentsFiles: passengerDocumentFileSchema.optional(),
         });
 
         const passengerSchema = Joi.object({
-            id: Joi.string().required(),
-            notes: Joi.string().allow(null),
-            createdAt: Joi.date().required(),
-            updatedAt: Joi.date().required(),
-            deletedAt: Joi.date().allow(null),
-            visaRequestId: Joi.string().required(),
-            name: Joi.string().required(),
-            surname: Joi.string().required(),
-            placeOfBirth: Joi.string().required(),
-            dateOfBirth: Joi.date().required(),
-            passportNumber: Joi.string().required(),
-            passportDeliveryDate: Joi.date().required(),
-            passportExpirationDate: Joi.date().required(),
-            email: Joi.string().email().required(),
-            phone: Joi.string().required(),
-            passengerDocuments: Joi.array().items(passengerDocumentSchema).required(),
+            id: Joi.string().required(), // ID required for updates
+            notes: Joi.string().allow(null).optional(),
+            createdAt: Joi.date().optional(),
+            updatedAt: Joi.date().optional(),
+            deletedAt: Joi.date().allow(null).optional(),
+            visaRequestId: Joi.string().optional(),
+            name: Joi.string().optional(),
+            surname: Joi.string().optional(),
+            placeOfBirth: Joi.string().optional(),
+            dateOfBirth: Joi.date().optional(),
+            passportNumber: Joi.string().optional(),
+            passportDeliveryDate: Joi.date().optional(),
+            passportExpirationDate: Joi.date().optional(),
+            email: Joi.string().email().optional(),
+            phone: Joi.string().optional(),
+            passengerDocuments: Joi.array().items(passengerDocumentSchema).optional(),
         });
 
         const basicInfosSchema = Joi.object({
-            visaRequestId: Joi.alternatives().try(Joi.string(), Joi.number()).required(),
-            id: Joi.alternatives().try(Joi.string(), Joi.number()).required(),
-            country: Joi.string().required(),
+            visaRequestId: Joi.string().required(), // Required for update
+            id: Joi.string().optional(),
             travelStartingDate: Joi.alternatives()
                 .try(Joi.string(), Joi.date())
-                .required()
+                .optional()
                 .messages({
                     "date.base": "Travel starting date must be a valid date",
                 }),
-            groupSize: Joi.number().required(),
+            groupSize: Joi.number().optional(),
             status: Joi.string()
                 .valid("Pending", "Processing", "Done", "Cancelled")
-                .required()
+                .optional()
                 .messages({
                     "any.only": "Status must be one of: Pending, Processing, Done, Cancelled",
                 }),
-            nationality: Joi.string().required(),
-            totalPrice: Joi.number().required(),
-            agencyName: Joi.string().required(),
-            agentName: Joi.string().required(),
-            name: Joi.string().required(),
-            notes: Joi.string().allow(null),
+            nationality: Joi.string().optional(),
+            totalPrice: Joi.number().optional(),
+            agencyName: Joi.string().optional(),
+            agentName: Joi.string().optional(),
+            name: Joi.string().optional(),
+            notes: Joi.string().allow(null).optional(),
         });
 
         const updateVisaRequestSchema = Joi.object({
             id: Joi.string().required(),
             basicInfos: basicInfosSchema.required(),
-            passengers: Joi.array().items(passengerSchema).required(),
+            passengers: Joi.array().items(passengerSchema).optional(),
         });
 
-        const validatedInput = validateInput<{
-            id: string;
-            basicInfos: {
-                visaRequestId: string;
-                id: string;
-                country: string;
-                travelStartingDate: string | Date;
-                groupSize: number;
-                status: string;
-                nationality: string;
-                totalPrice: number;
-                agencyName: string;
-                agentName: string;
-                name: string;
-                notes: string | null;
-            };
-            passengers: ({
-                passengerDocuments: ({
-                    passengerDocumentsFiles: {
-                        id: string;
-                        deletedAt: Date;
-                        name: string;
-                        filePath: string;
-                        fileType: string;
-                        uploadedAt: Date;
-                    };
-                } & {
-                    id: string;
-                    createdAt: Date;
-                    passengerId: string;
-                    documentId: string;
-                    label: string | null;
-                    isMendatory: boolean | null;
-                })[];
-            } & {
-                id: string;
-                notes: string | null;
-                createdAt: Date;
-                updatedAt: Date;
-                deletedAt: Date | null;
-                visaRequestId: string;
-                name: string;
-                surname: string;
-                placeOfBirth: string;
-                dateOfBirth: Date;
-                passportNumber: string;
-                passportDeliveryDate: Date;
-                passportExpirationDate: Date;
-                email: string;
-                phone: string;
-            })[];
-        }>(updateVisaRequestSchema, inputData);
-
+        const validatedInput = validateInput(updateVisaRequestSchema, inputData);
         const {
             id: pivotId,
             basicInfos: { visaRequestId, ...visaRequestData },
             passengers,
         } = validatedInput;
 
-        // Convert dates and prices
-        const updateData = {
-            ...visaRequestData,
-            travelStartingDate: new Date(visaRequestData.travelStartingDate),
-            totalPrice: String(visaRequestData.totalPrice),
-        };
+        // Prepare update data with only provided fields
+        const updateData: Prisma.VisaRequestUpdateInput = {};
+
+        if (visaRequestData.travelStartingDate !== undefined) {
+            updateData.travelStartingDate = new Date(visaRequestData.travelStartingDate);
+        }
+        if (visaRequestData.groupSize !== undefined)
+            updateData.groupSize = visaRequestData.groupSize;
+        if (visaRequestData.status !== undefined) updateData.status = visaRequestData.status;
+        if (visaRequestData.nationality !== undefined)
+            updateData.nationality = visaRequestData.nationality;
+        if (visaRequestData.totalPrice !== undefined)
+            updateData.totalPrice = String(visaRequestData.totalPrice);
+        if (visaRequestData.agencyName !== undefined)
+            updateData.agencyName = visaRequestData.agencyName;
+        if (visaRequestData.agentName !== undefined)
+            updateData.agentName = visaRequestData.agentName;
+        if (visaRequestData.notes !== undefined) updateData.notes = visaRequestData.notes;
 
         await prisma.$transaction(async (tx) => {
-            // 1. Update VisaRequest
-            await tx.visaRequest.update({
-                where: { id: visaRequestId },
-                data: updateData,
-            });
-
-            // 2. Update Passengers
-            for (const passenger of passengers) {
-                // Update passenger fields
-                await tx.passenger.update({
-                    where: { id: passenger.id },
-                    data: {
-                        name: passenger.name,
-                        surname: passenger.surname,
-                        placeOfBirth: passenger.placeOfBirth,
-                        dateOfBirth: new Date(passenger.dateOfBirth),
-                        passportNumber: passenger.passportNumber,
-                        passportDeliveryDate: new Date(passenger.passportDeliveryDate),
-                        passportExpirationDate: new Date(passenger.passportExpirationDate),
-                        email: passenger.email,
-                        phone: passenger.phone,
-                        notes: passenger.notes,
-                    },
+            // Update VisaRequest if any fields provided
+            if (Object.keys(updateData).length > 0) {
+                await tx.visaRequest.update({
+                    where: { id: visaRequestId },
+                    data: updateData,
                 });
+            }
 
-                // 3. Update Passenger Documents (if needed)
-                for (const document of passenger.passengerDocuments) {
-                    await tx.passengerDocuments.update({
-                        where: { id: document.id },
-                        data: {
-                            label: document.label,
-                            isMendatory: document.isMendatory,
-                        },
-                    });
+            // Update passengers if provided
+            if (passengers && passengers.length > 0) {
+                for (const passenger of passengers) {
+                    const passengerUpdateData: Prisma.PassengerUpdateInput = {};
+
+                    if (passenger.name !== undefined) passengerUpdateData.name = passenger.name;
+                    if (passenger.surname !== undefined)
+                        passengerUpdateData.surname = passenger.surname;
+                    if (passenger.placeOfBirth !== undefined)
+                        passengerUpdateData.placeOfBirth = passenger.placeOfBirth;
+                    if (passenger.dateOfBirth !== undefined)
+                        passengerUpdateData.dateOfBirth = new Date(passenger.dateOfBirth);
+                    if (passenger.passportNumber !== undefined)
+                        passengerUpdateData.passportNumber = passenger.passportNumber;
+                    if (passenger.passportDeliveryDate !== undefined)
+                        passengerUpdateData.passportDeliveryDate = new Date(
+                            passenger.passportDeliveryDate
+                        );
+                    if (passenger.passportExpirationDate !== undefined)
+                        passengerUpdateData.passportExpirationDate = new Date(
+                            passenger.passportExpirationDate
+                        );
+                    if (passenger.email !== undefined) passengerUpdateData.email = passenger.email;
+                    if (passenger.phone !== undefined) passengerUpdateData.phone = passenger.phone;
+                    if (passenger.notes !== undefined) passengerUpdateData.notes = passenger.notes;
+
+                    // Only update if there are fields to update
+                    if (Object.keys(passengerUpdateData).length > 0) {
+                        await tx.passenger.update({
+                            where: { id: passenger.id },
+                            data: passengerUpdateData,
+                        });
+                    }
+
+                    // Update documents if provided
+                    if (passenger.passengerDocuments && passenger.passengerDocuments.length > 0) {
+                        for (const document of passenger.passengerDocuments) {
+                            const documentUpdateData: Prisma.PassengerDocumentsUpdateInput = {};
+
+                            if (document.label !== undefined)
+                                documentUpdateData.label = document.label;
+                            if (document.isMendatory !== undefined)
+                                documentUpdateData.isMendatory = document.isMendatory;
+
+                            // Only update if there are fields to update
+                            if (Object.keys(documentUpdateData).length > 0) {
+                                await tx.passengerDocuments.update({
+                                    where: { id: document.id },
+                                    data: documentUpdateData,
+                                });
+                            }
+                        }
+                    }
                 }
             }
         });
