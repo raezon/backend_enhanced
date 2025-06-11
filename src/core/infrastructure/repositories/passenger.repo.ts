@@ -1,4 +1,4 @@
-import { prisma } from "@/config";
+import { Env, prisma } from "@/config";
 import { Prisma } from "@prisma/client";
 
 export const passengerRepo = {
@@ -103,7 +103,7 @@ export const passengerRepo = {
                 return f
                     ? {
                           ...f,
-                          filePath: `${process.env.BASE_URL}/${f.filePath}`,
+                          filePath: `${Env.BASE_URl}/uploads/documents/${f.filePath}`,
                       }
                     : [];
             });

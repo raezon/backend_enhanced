@@ -139,7 +139,7 @@ export const PassengerService = {
 
         // Ensure at least one file is uploaded
         if (!files || files.length === 0) {
-            console.error("[PassengerService] No files uploaded");
+            console.error("[PassengerService] No files uploadded");
             throw new ConstraintError(
                 "At least one file is required",
                 400,

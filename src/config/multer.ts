@@ -2,6 +2,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { NextFunction, Request, Response } from "express";
+import { RequestWithAuth } from "@/core/app/base/types";
 
 // Create the uploads/documents directory if it doesn't exist
 const uploadPath = path.join(process.cwd(), "uploads/documents");
@@ -67,6 +68,8 @@ export const handleFileUpload = upload.array("documents");
 
 // Error handling wrapper
 export const fileUploadMiddleware = (req: Request, res: Response, next: NextFunction) => {
+    const { id } = (req as RequestWithAuth).user;
+
     handleFileUpload(req, res as Response, (err) => {
         if (err) {
             // Handle Multer-specific errors

@@ -26,6 +26,7 @@ const envSchemaObject = Joi.object({
     SENDGRID_API_KEY: Joi.string().required(),
     FRONTEND_URL: Joi.string().uri().required(),
     EMAIL_SENDER: Joi.string().email().required(),
+    BASE_URL: Joi.string().required(),
 }).unknown(true);
 
 const { error, value } = envSchemaObject.validate(process.env, {
@@ -60,6 +61,7 @@ const ENV = {
     SENDGRID_API_KEY: value.SENDGRID_API_KEY,
     FRONTEND_URL: value.FRONTEND_URL,
     EMAIL_SENDER: value.EMAIL_SENDER,
+    BASE_URl: value.BASE_URL,
 };
 
 export default ENV;
