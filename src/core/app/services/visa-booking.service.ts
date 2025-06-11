@@ -123,6 +123,7 @@ export const VisaBookingService = {
     },
 
     updateVisaRequest: async (inputData: {
+        id: string;
         basicInfos: {
             visaRequestId: string;
             id?: string;
@@ -137,32 +138,9 @@ export const VisaBookingService = {
             name?: string;
             notes?: string | null;
         };
-
-        passengers?: ({
-            passengerDocuments?: ({
-                passengerDocumentsFiles?: {
-                    id?: string;
-                    deletedAt?: Date;
-                    name?: string;
-                    filePath?: string;
-                    fileType?: string;
-                    uploadedAt?: Date;
-                };
-            } & {
-                id?: string;
-                createdAt?: Date;
-                passengerId?: string;
-                documentId?: string;
-                label?: string | null;
-                isMendatory?: boolean | null;
-            })[];
-        } & {
-            id?: string;
+        passengers?: {
+            id: string;
             notes?: string | null;
-            createdAt?: Date;
-            updatedAt?: Date;
-            deletedAt?: Date | null;
-            visaRequestId?: string;
             name?: string;
             surname?: string;
             placeOfBirth?: string;
@@ -172,37 +150,30 @@ export const VisaBookingService = {
             passportExpirationDate?: Date;
             email?: string;
             phone?: string;
-        })[];
-
-        id: string;
+            passengerDocuments?: {
+                id?: string;
+                label?: string | null;
+                isMendatory?: boolean | null;
+                fileId?: string; // For matching uploaded files
+                deleted?: boolean; // For deletion flag
+                existingFileId?: string; // For existing file reference
+            }[];
+        }[];
+        files: Express.Multer.File[];
     }) => {
-        // Updated validation schemas with optional fields
-        const passengerDocumentFileSchema = Joi.object({
-            id: Joi.string().optional(),
-            deletedAt: Joi.date().optional(),
-            name: Joi.string().optional(),
-            filePath: Joi.string().optional(),
-            fileType: Joi.string().optional(),
-            uploadedAt: Joi.date().optional(),
-        });
-
+        // Updated validation schemas
         const passengerDocumentSchema = Joi.object({
             id: Joi.string().optional(),
-            createdAt: Joi.date().optional(),
-            passengerId: Joi.string().optional(),
-            documentId: Joi.string().optional(),
             label: Joi.string().allow(null).optional(),
             isMendatory: Joi.boolean().allow(null).optional(),
-            passengerDocumentsFiles: passengerDocumentFileSchema.optional(),
+            fileId: Joi.string().optional(), // For new/replacement files
+            deleted: Joi.boolean().optional(), // For deletion flag
+            existingFileId: Joi.string().optional(), // For existing files
         });
 
         const passengerSchema = Joi.object({
-            id: Joi.string().required(), // ID required for updates
+            id: Joi.string().required(),
             notes: Joi.string().allow(null).optional(),
-            createdAt: Joi.date().optional(),
-            updatedAt: Joi.date().optional(),
-            deletedAt: Joi.date().allow(null).optional(),
-            visaRequestId: Joi.string().optional(),
             name: Joi.string().optional(),
             surname: Joi.string().optional(),
             placeOfBirth: Joi.string().optional(),
@@ -216,21 +187,11 @@ export const VisaBookingService = {
         });
 
         const basicInfosSchema = Joi.object({
-            visaRequestId: Joi.string().required(), // Required for update
+            visaRequestId: Joi.string().required(),
             id: Joi.string().optional(),
-            travelStartingDate: Joi.alternatives()
-                .try(Joi.string(), Joi.date())
-                .optional()
-                .messages({
-                    "date.base": "Travel starting date must be a valid date",
-                }),
+            travelStartingDate: Joi.alternatives().try(Joi.string(), Joi.date()).optional(),
             groupSize: Joi.number().optional(),
-            status: Joi.string()
-                .valid("Pending", "Processing", "Done", "Cancelled")
-                .optional()
-                .messages({
-                    "any.only": "Status must be one of: Pending, Processing, Done, Cancelled",
-                }),
+            status: Joi.string().valid("Pending", "Processing", "Done", "Cancelled").optional(),
             nationality: Joi.string().optional(),
             totalPrice: Joi.string().optional(),
             agencyName: Joi.string().optional(),
@@ -243,6 +204,7 @@ export const VisaBookingService = {
             id: Joi.string().required(),
             basicInfos: basicInfosSchema.required(),
             passengers: Joi.array().items(passengerSchema).optional(),
+            files: Joi.array().items(Joi.object()).optional(),
         });
 
         const validatedInput = validateInput(updateVisaRequestSchema, inputData);
@@ -250,9 +212,16 @@ export const VisaBookingService = {
             id: pivotId,
             basicInfos: { visaRequestId, ...visaRequestData },
             passengers,
+            files = [],
         } = validatedInput;
 
-        // Prepare update data with only provided fields
+        // Create file map by fieldname (fileId)
+        const fileMap = new Map<string, Express.Multer.File>();
+        files.forEach((file) => {
+            fileMap.set(file.fieldname, file);
+        });
+
+        // Prepare update data
         const updateData: Prisma.VisaRequestUpdateInput = {};
 
         if (visaRequestData.travelStartingDate !== undefined) {
@@ -271,8 +240,8 @@ export const VisaBookingService = {
             updateData.agentName = visaRequestData.agentName;
         if (visaRequestData.notes !== undefined) updateData.notes = visaRequestData.notes;
 
-        await prisma.$transaction(async (tx) => {
-            // Update VisaRequest if any fields provided
+        const updatedVisaRequest = await prisma.$transaction(async (tx) => {
+            // Update VisaRequest
             if (Object.keys(updateData).length > 0) {
                 await tx.visaRequest.update({
                     where: { id: visaRequestId },
@@ -280,9 +249,10 @@ export const VisaBookingService = {
                 });
             }
 
-            // Update passengers if provided
+            // Process passengers
             if (passengers && passengers.length > 0) {
                 for (const passenger of passengers) {
+                    // Update passenger details
                     const passengerUpdateData: Prisma.PassengerUpdateInput = {};
 
                     if (passenger.name !== undefined) passengerUpdateData.name = passenger.name;
@@ -306,7 +276,6 @@ export const VisaBookingService = {
                     if (passenger.phone !== undefined) passengerUpdateData.phone = passenger.phone;
                     if (passenger.notes !== undefined) passengerUpdateData.notes = passenger.notes;
 
-                    // Only update if there are fields to update
                     if (Object.keys(passengerUpdateData).length > 0) {
                         await tx.passenger.update({
                             where: { id: passenger.id },
@@ -314,30 +283,129 @@ export const VisaBookingService = {
                         });
                     }
 
-                    // Update documents if provided
-                    if (passenger.passengerDocuments && passenger.passengerDocuments.length > 0) {
+                    // Process documents
+                    if (passenger.passengerDocuments) {
                         for (const document of passenger.passengerDocuments) {
-                            const documentUpdateData: Prisma.PassengerDocumentsUpdateInput = {};
+                            // Document deletion
+                            if (document.deleted) {
+                                if (document.id) {
+                                    // Delete document association
+                                    await tx.passengerDocuments.delete({
+                                        where: { id: document.id },
+                                    });
+                                }
 
-                            if (document.label !== undefined)
-                                documentUpdateData.label = document.label;
-                            if (document.isMendatory !== undefined)
-                                documentUpdateData.isMendatory = document.isMendatory;
+                                if (document.existingFileId) {
+                                    // Soft-delete file
+                                    await tx.passengerDocumentsFiles.update({
+                                        where: { id: document.existingFileId },
+                                        data: { deletedAt: new Date() },
+                                    });
+                                }
+                                continue;
+                            }
 
-                            // Only update if there are fields to update
-                            if (Object.keys(documentUpdateData).length > 0) {
-                                await tx.passengerDocuments.update({
-                                    where: { id: document.id },
-                                    data: documentUpdateData,
+                            // Existing document update
+                            if (document.id) {
+                                const docUpdateData: Prisma.PassengerDocumentsUpdateInput = {};
+
+                                if (document.label !== undefined)
+                                    docUpdateData.label = document.label;
+                                if (document.isMendatory !== undefined)
+                                    docUpdateData.isMendatory = document.isMendatory;
+
+                                // File replacement
+                                if (document.fileId) {
+                                    const file = fileMap.get(document.fileId);
+                                    if (!file) {
+                                        throw new Error(
+                                            `File not found for fileId: ${document.fileId}`
+                                        );
+                                    }
+
+                                    // Create new file record
+                                    const newFile = await tx.passengerDocumentsFiles.create({
+                                        data: {
+                                            filePath: file.path, // Adjust based on storage
+                                            fileType: file.mimetype,
+                                            name: file.originalname,
+                                            uploadedAt: new Date(),
+                                        },
+                                    });
+
+                                    // Update document to point to new file
+                                    docUpdateData.id = newFile.id;
+
+                                    // Soft-delete previous file if exists
+                                    if (document.existingFileId) {
+                                        await tx.passengerDocumentsFiles.update({
+                                            where: { id: document.existingFileId },
+                                            data: { deletedAt: new Date() },
+                                        });
+                                    }
+                                }
+
+                                // Update document metadata
+                                if (Object.keys(docUpdateData).length > 0) {
+                                    await tx.passengerDocuments.update({
+                                        where: { id: document.id },
+                                        data: docUpdateData,
+                                    });
+                                }
+                            }
+                            // New document creation
+                            else if (document.fileId) {
+                                const file = fileMap.get(document.fileId);
+                                if (!file) {
+                                    throw new Error(
+                                        `File not found for fileId: ${document.fileId}`
+                                    );
+                                }
+
+                                // Create new file record
+                                const newFile = await tx.passengerDocumentsFiles.create({
+                                    data: {
+                                        filePath: file.path, // Adjust based on storage
+                                        fileType: file.mimetype,
+                                        name: file.originalname,
+                                        uploadedAt: new Date(),
+                                    },
+                                });
+
+                                // Create new document association
+                                await tx.passengerDocuments.create({
+                                    data: {
+                                        passengerId: passenger.id,
+                                        label: document.label || "Document",
+                                        isMendatory: document.isMendatory ?? true,
+                                        documentId: newFile.id,
+                                    },
                                 });
                             }
                         }
                     }
                 }
             }
+
+            return tx.visaRequest.findUnique({
+                where: { id: visaRequestId },
+                include: {
+                    passengers: {
+                        include: {
+                            passengerDocuments: {
+                                include: {
+                                    passengerDocumentsFiles: true,
+                                },
+                            },
+                        },
+                    },
+                },
+            });
         });
 
-        // Return updated booking
-        return VisaBookingService.getVisaBookingById({ id: pivotId });
+        return {
+            ...updatedVisaRequest,
+            pivotId,
+        };
     },
 };
