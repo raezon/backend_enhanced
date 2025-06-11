@@ -71,9 +71,8 @@ export const visaBookingRepo = {
             select: {
                 id: true,
                 visa: {
-                    select: {
+                    include: {
                         country: true,
-                        name: true,
                     },
                 },
                 visaRequest: {
@@ -87,6 +86,7 @@ export const visaBookingRepo = {
                         agencyName: true,
                         agentName: true,
                         notes: true,
+                        
                     },
                 },
             },
