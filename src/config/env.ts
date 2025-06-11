@@ -61,7 +61,7 @@ const ENV = {
     SENDGRID_API_KEY: value.SENDGRID_API_KEY,
     FRONTEND_URL: value.FRONTEND_URL,
     EMAIL_SENDER: value.EMAIL_SENDER,
-    BASE_URl: value.BASE_URL,
+    BASE_URL: value.BASE_URL,
 };
 
 export default ENV;

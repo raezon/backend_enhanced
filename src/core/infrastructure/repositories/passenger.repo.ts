@@ -103,7 +103,7 @@ export const passengerRepo = {
                 return f
                     ? {
                           ...f,
-                          filePath: `${Env.BASE_URl}/uploads/documents/${f.filePath}`,
+                          filePath: `${Env.BASE_URL}/uploads/documents/${f.filePath}`,
                       }
                     : [];
             });
