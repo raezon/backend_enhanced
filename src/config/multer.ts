@@ -27,20 +27,38 @@ const storage = multer.diskStorage({
     },
 });
 
-// Restrict allowed file types
+// Restrict allowed file types (EXPANDED FOR PNG/JPEG)
 const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
     const allowedTypes = [
+        // PDF Types
         "application/pdf",
-        "image/jpeg",
-        "image/pjpeg", // Progressive JPEG
-        "image/jpg",   // Some browsers/clients use this
-        "image/jpe",   // Rare, but valid JPEG extension
+        "application/x-pdf",
+        "application/acrobat",
+        "applications/vnd.pdf",
+        "text/pdf",
+        "text/x-pdf",
+
+        // PNG Types
         "image/png",
-        "image/x-png", // Alternative PNG type
-        "image/apng", // Animated PNG
-        "image/webp",
-        "application/msword", // .doc
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
+        "image/x-png",
+        "application/png",
+        "application/x-png",
+
+        // JPEG Types
+        "image/jpeg",
+        "image/pjpeg",
+        "image/jpg",
+        "image/jpe",
+        "image/jpeg;base64",
+        "image/jpg;base64",
+        "image/pjpeg;base64",
+
+        // DOC/DOCX Types
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.ms-word",
+        "application/octet-stream", // For docx files from some clients
+        "application/zip", // Some systems identify docx as zip
     ];
 
     // Debugging: Log all incoming files
