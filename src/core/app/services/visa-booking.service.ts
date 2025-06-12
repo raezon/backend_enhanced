@@ -124,7 +124,7 @@ export const VisaBookingService = {
 
     updateVisaRequest: async (inputData: {
         id: string;
-        passengerId: string;
+        passenger: { id: string; documentId: string };
         // basicInfos: {
         //     visaRequestId: string;
         //     id?: string;
@@ -162,21 +162,30 @@ export const VisaBookingService = {
         // }[];
         files: Express.Multer.File[];
     }) => {
-        const { id, files, passengerId } = inputData;
+        const { id, files, passenger } = inputData;
 
         const schema = Joi.object({
             id: Joi.string().uuid().required().messages({
                 "any.required": "ID is a required field",
                 "string.uuid": "ID must be a valid UUID",
             }),
-            passengerId: Joi.string().uuid().required().messages({
-                "any.required": "Passenger ID is a required field",
-                "string.uuid": "Passenger ID must be a valid UUID",
+            passengerId: Joi.object({
+                id: Joi.string().uuid().required().messages({
+                    "any.required": "Passenger ID is a required field",
+                    "string.uuid": "Passenger ID must be a valid UUID",
+                }),
+                documentId: Joi.string().uuid().required().messages({
+                    "any.required": "document ID is a required field",
+                    "string.uuid": "document ID must be a valid UUID",
+                }),
             }),
         });
 
-        const validatedInput = validateInput(schema, { id, passengerId });
-        const { id: validatedId, passengerId: validatedPassengerId } = validatedInput;
+        const validatedInput = validateInput(schema, { id, passenger });
+        const {
+            id: validatedId,
+            passenger: { id: validatedPassengerId, documentId: validatedDocumentId },
+        } = validatedInput;
         const passengerExists = await passengerRepo.exists(validatedPassengerId);
 
         if (!passengerExists) {
@@ -200,7 +209,27 @@ export const VisaBookingService = {
         }
 
         const result = await prisma.$transaction(async (tx) => {
-            for (const file of files) {
+            const savedDocs = await tx.passengerDocuments.findMany({
+                where: {
+                    passengerId: validatedPassengerId,
+                    documentId: validatedDocumentId,
+                },
+
+                include: {
+                    passengerDocumentsFiles: true,
+                },
+            });
+            const savedDocFiles = savedDocs.map((t) => t.passengerDocumentsFiles);
+            const savedFileNames = savedDocFiles.map((f) => f.filePath);
+            const uploadedFileNames = files.map((f) => f.originalname);
+
+            // Added files: in upload but not in DB
+            const addedFiles = files.filter((f) => !savedFileNames.includes(f.filename));
+
+            // Deleted files: in DB but not in upload
+            const deletedFiles = savedDocFiles.filter((f) => !uploadedFileNames.includes(f.filePath));
+
+            for (const file of addedFiles) {
                 const savedFile = await tx.passengerDocumentsFiles.create({
                     data: {
                         filePath: file.filename, // stored filename only
@@ -208,16 +237,29 @@ export const VisaBookingService = {
                         name: file.originalname,
                     },
                 });
-
-                const doc = await tx.passengerDocuments.create({
+                await tx.passengerDocuments.create({
                     data: {
-                        passengerId: validatedPassengerId,
+                        passengerId: passenger.id,
                         documentId: savedFile.id,
                     },
                 });
             }
-        });
 
+            for (const file of deletedFiles) {
+                await tx.passengerDocuments.delete({
+                    where: {
+                        passengerId_documentId: {
+                            passengerId: validatedPassengerId,
+                            documentId: validatedDocumentId,
+                        },
+
+                        passengerDocumentsFiles: {
+                            id: file.id,
+                        },
+                    },
+                });
+            }
+        });
         return result;
     },
 };
