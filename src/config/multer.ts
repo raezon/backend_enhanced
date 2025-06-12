@@ -32,6 +32,9 @@ const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilt
     const allowedTypes = [
         "application/pdf",
         "image/jpeg",
+        "image/pjpeg", // Progressive JPEG
+        "image/jpg",   // Some browsers/clients use this
+        "image/jpe",   // Rare, but valid JPEG extension
         "image/png",
         "image/x-png", // Alternative PNG type
         "image/apng", // Animated PNG
