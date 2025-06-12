@@ -4,6 +4,36 @@ import { validateInput } from "@/utils/validate-input";
 import { prisma } from "@/config";
 
 export const PackageService = {
+    addImages: async (inputData: { files: Express.Multer.File[]; packageId: string }) => {
+        const schema = Joi.object({
+            files: Joi.array()
+                .items(
+                    Joi.object({
+                        originalname: Joi.string().required(),
+                        buffer: Joi.binary().required(),
+                    })
+                )
+                .min(1)
+                .required(),
+            packageId: Joi.string().uuid().required(),
+        });
+
+        const { files, packageId } = validateInput<{
+            files: Express.Multer.File[];
+            packageId: string;
+        }>(schema, inputData);
+
+        const data = await prisma.packageImage.createMany({
+            data: files.map((file) => ({
+                packageId,
+                fileName: file.originalname,
+                url: file.filename,
+            })),
+        });
+
+        return data;
+    },
+
     createNewPackage: async (inputData: {
         userId: string;
         basic: {

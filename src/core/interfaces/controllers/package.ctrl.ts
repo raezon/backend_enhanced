@@ -14,4 +14,18 @@ export const PackageController = {
             data: result,
         });
     }),
+
+    addImages: TryCatchBlock(async (req: Request, res: Response) => {
+        const inputData = {
+            files: req.files as Express.Multer.File[],
+            packageId: req.params.id,
+        };
+
+        const result = await PackageService.addImages(inputData);
+
+        res.status(200).json({
+            message: "Images added successfully",
+            data: result,
+        });
+    }),
 };

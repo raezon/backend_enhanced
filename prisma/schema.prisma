@@ -28,7 +28,6 @@ model Hotel{
   // maxPricePerNight      Float  both are not used in the new design
 }
 
-
 enum PackageType {
   VACATION
   OMRA
@@ -62,6 +61,17 @@ model Package {
   departures      Departure[]
   destinations    Destination[]
   pricePerPerson  PricePerPerson? 
+
+  images  PackageImage[]
+}
+
+model PackageImage {
+  id                String   @id @default(uuid())
+  packageId         String   @unique
+  url               String   
+  package           Package  @relation(fields: [packageId], references: [id])
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
 model Departure {
