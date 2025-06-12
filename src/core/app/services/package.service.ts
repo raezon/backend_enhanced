@@ -1,98 +1,173 @@
 import Joi from "joi";
-import { Prisma } from "@prisma/client";
-import { packageRepo } from "@/core/infrastructure/repositories/package.repo";
+import { PackageType } from "@prisma/client";
 import { validateInput } from "@/utils/validate-input";
-import { ConstraintError } from "../base/constraint-error";
+import { prisma } from "@/config";
 
-export const packageService = {
-    createPackage: async (
-        input: Prisma.PackageCreateInput & {
-            departures?: Prisma.DepartureCreateWithoutPackageInput[];
-            destinations?: Prisma.DestinationCreateWithoutPackageInput[];
-            pricePerPersons?: Prisma.PricePerPersonCreateWithoutUserInput[];
-        }
-    ) => {
+export const PackageService = {
+    createNewPackage: async (inputData: {
+        userId: string;
+        basic: {
+            isPublic: boolean;
+            combination_active: boolean;
+            isRecommended: boolean;
+            name: string;
+            displayName: string;
+            option: number;
+            priority: number;
+            departureCity: string;
+            type: PackageType;
+            shortDescription: string;
+            description?: string;
+            importantNotes?: string;
+            empContract?: string;
+            inclusion?: string;
+            min_age_first_child?: number;
+            max_age_first_child?: number;
+            min_age_second_child?: number;
+            max_age_second_child?: number;
+        };
+        departures: { name: string }[];
+        destinations: { name: string }[];
+        pricePerPerson: {
+            markupPlatform: number;
+            markupAgency: number;
+            prices: {
+                name: string;
+                adultPrice: number;
+                childPrice6To11: number;
+                childPrice2To5: number;
+                infantPrice: number;
+            }[];
+        };
+    }) => {
         const schema = Joi.object({
             userId: Joi.string().uuid().required(),
-            name: Joi.string().required(),
-            displayName: Joi.string().required(),
-            option: Joi.number().required(),
-            departureCity: Joi.string().required(),
-            type: Joi.string().valid("VACATION", "OMRA", "HADJ").required(),
-            shortDescription: Joi.string().required(),
-            isRecommended: Joi.boolean().optional(),
-            priority: Joi.number().integer().optional(),
-            description: Joi.string().allow(null, "").optional(),
-            importantNote: Joi.string().allow(null, "").optional(),
-            employmentContact: Joi.string().allow(null, "").optional(),
-            inclusion: Joi.string().allow(null, "").optional(),
+            basic: Joi.object({
+                isPublic: Joi.boolean().required(),
+                combination_active: Joi.boolean().required(),
+                isRecommended: Joi.boolean().required(),
+                name: Joi.string().required(),
+                displayName: Joi.string().required(),
+                option: Joi.number().integer().required(),
+                priority: Joi.number().integer().required(),
+                departureCity: Joi.string().required(),
+                type: Joi.string().valid("VACATION", "OMRA", "HADJ").required(),
+                shortDescription: Joi.string().required(),
+                description: Joi.string().optional().allow(null, ""),
+                importantNotes: Joi.string().optional().allow(null, ""),
+                empContract: Joi.string().optional().allow(null, ""),
+                inclusion: Joi.string().optional().allow(null, ""),
+                min_age_first_child: Joi.number().integer().min(0).optional(),
+                max_age_first_child: Joi.number().integer().min(0).optional(),
+                min_age_second_child: Joi.number().integer().min(0).optional(),
+                max_age_second_child: Joi.number().integer().min(0).optional(),
+            }).required(),
+
             departures: Joi.array()
-                .items(Joi.object({ departureCity: Joi.string().required() }))
-                .optional(),
+                .items(Joi.object({ name: Joi.string().required() }))
+                .min(1)
+                .required(),
+
             destinations: Joi.array()
-                .items(Joi.object({ departureCity: Joi.string().required() }))
-                .optional(),
-            pricePerPersons: Joi.array()
-                .items(
-                    Joi.object({
-                        displayName: Joi.string().required(),
-                        name: Joi.string().required(),
-                        priceAdult: Joi.number().required(),
-                        priceChild6To11: Joi.number().required(),
-                        priceChild2To5: Joi.number().required(),
-                        priceInfant: Joi.number().required(),
-                        markupPlatform: Joi.number().optional(),
-                        markupAgency: Joi.number().optional(),
-                    })
-                )
-                .optional(),
+                .items(Joi.object({ name: Joi.string().required() }))
+                .min(1)
+                .required(),
+
+            pricePerPerson: Joi.object({
+                markupPlatform: Joi.number().min(0).required(),
+                markupAgency: Joi.number().min(0).required(),
+                prices: Joi.array()
+                    .items(
+                        Joi.object({
+                            name: Joi.string().required(),
+                            adultPrice: Joi.number().min(0).required(),
+                            childPrice6To11: Joi.number().min(0).required(),
+                            childPrice2To5: Joi.number().min(0).required(),
+                            infantPrice: Joi.number().min(0).required(),
+                        })
+                    )
+                    .min(1)
+                    .required(),
+            }).required(),
         });
 
-        const data = validateInput(schema, input);
-        return await packageRepo.create(data);
-    },
+        const { basic, departures, destinations, pricePerPerson, userId } = validateInput<{
+            userId: string;
+            basic: {
+                isPublic: boolean;
+                combination_active: boolean;
+                isRecommended: boolean;
+                name: string;
+                displayName: string;
+                option: number;
+                priority: number;
+                departureCity: string;
+                type: PackageType;
+                shortDescription: string;
+                description?: string;
+                importantNotes?: string;
+                empContract?: string;
+                inclusion?: string;
+                min_age_first_child?: number;
+                max_age_first_child?: number;
+                min_age_second_child?: number;
+                max_age_second_child?: number;
+            };
+            departures: { name: string }[];
+            destinations: { name: string }[];
+            pricePerPerson: {
+                markupPlatform: number;
+                markupAgency: number;
+                prices: {
+                    name: string;
+                    adultPrice: number;
+                    childPrice6To11: number;
+                    childPrice2To5: number;
+                    infantPrice: number;
+                }[];
+            };
+        }>(schema, inputData);
 
-    getPackageById: async (id: string) => {
-        const packageData = await packageRepo.findById(id);
-        return packageData;
-    },
+        const data = prisma.$transaction(async (tx) => {
+            const createdPackage = await tx.package.create({
+                data: {
+                    ...basic,
+                    userId,
+                },
+            });
 
-    getAllPackages: async () => {
-        return await packageRepo.findMany();
-    },
+            await tx.departure.createMany({
+                data: departures.map((departure) => ({
+                    name: departure.name,
+                    packageId: createdPackage.id,
+                })),
+            });
 
-    updatePackage: async (
-        id: string,
-        input: Partial<Prisma.PackageUpdateInput> & {
-            departures?: Prisma.DepartureCreateWithoutPackageInput[];
-            destinations?: Prisma.DestinationCreateWithoutPackageInput[];
-            pricePerPersons?: Prisma.PricePerPersonCreateWithoutUserInput[];
-        }
-    ) => {
-        const exists = await packageRepo.exists({ id });
-        if (!exists) {
-            throw new ConstraintError(
-                "Package not found",
-                404,
-                "RESOURCE_NOT_FOUND",
-                "The package you're trying to update does not exist."
-            );
-        }
+            await tx.destination.createMany({
+                data: destinations.map((destination) => ({
+                    name: destination.name,
+                    packageId: createdPackage.id,
+                })),
+            });
 
-        return await packageRepo.update(id, input);
-    },
+            const { prices, ...rest } = pricePerPerson;
+            const createdPricePerPerson = await tx.pricePerPerson.create({
+                data: {
+                    ...rest,
+                    packageId: createdPackage.id,
+                },
+            });
 
-    deletePackage: async (id: string) => {
-        const exists = await packageRepo.exists({ id });
-        if (!exists) {
-            throw new ConstraintError(
-                "Package not found",
-                404,
-                "RESOURCE_NOT_FOUND",
-                "The package you're trying to delete does not exist."
-            );
-        }
+            await tx.price.createMany({
+                data: prices.map((price) => ({
+                    ...price,
+                    pricePerPersonId: createdPricePerPerson.id,
+                })),
+            });
 
-        return await packageRepo.delete(id);
+            return createdPackage;
+        });
+
+        return data;
     },
 };

@@ -23,6 +23,11 @@ router.delete(
     idValidator("id", "Visa Request pivot (basicInfo with passengers)  ID"),
     deleteVisaBooking
 );
-router.put("/:id", idValidator("id", "Visa Request pivot (basicInfo with passengers) ID"), fileUploadMiddleware, updateVisaBooking);
-
+// Updated router configuration
+router.put(
+    "/:id",
+    idValidator("id", "Visa Request pivot ID"),
+    fileUploadMiddleware, 
+    updateVisaBooking    
+);
 export default router;

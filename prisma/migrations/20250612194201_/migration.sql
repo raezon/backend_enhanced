@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Package" ALTER COLUMN "option" SET DATA TYPE DOUBLE PRECISION;

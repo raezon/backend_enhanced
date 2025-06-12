@@ -3,6 +3,7 @@ import path from "path";
 import fs from "fs";
 import { NextFunction, Request, Response } from "express";
 import { RequestWithAuth } from "@/core/app/base/types";
+import printf from "@/scripts/printf";
 
 // Create the uploads/documents directory if it doesn't exist
 const uploadPath = path.join(process.cwd(), "uploads/documents");
@@ -10,7 +11,6 @@ if (!fs.existsSync(uploadPath)) {
     fs.mkdirSync(uploadPath, { recursive: true });
 }
 
-// Configure storage
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, uploadPath);
@@ -28,53 +28,45 @@ const storage = multer.diskStorage({
 });
 
 // Restrict allowed file types (EXPANDED FOR PNG/JPEG)
+// Updated fileFilter function
 const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+
+    console.log("Detected MIME:", file.mimetype, "Extension:", path.extname(file.originalname));
     const allowedTypes = [
-        // PDF Types
-        "application/pdf",
-        "application/x-pdf",
-        "application/acrobat",
-        "applications/vnd.pdf",
-        "text/pdf",
-        "text/x-pdf",
-
-        // PNG Types
-        "image/png",
-        "image/x-png",
-        "application/png",
-        "application/x-png",
-
-        // JPEG Types
-        "image/jpeg",
-        "image/pjpeg",
-        "image/jpg",
-        "image/jpe",
-        "image/jpeg;base64",
-        "image/jpg;base64",
-        "image/pjpeg;base64",
-
-        // DOC/DOCX Types
-        "application/msword",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "application/vnd.ms-word",
-        "application/octet-stream", // For docx files from some clients
-        "application/zip", // Some systems identify docx as zip
+        // PDF
+        'application/pdf',
+        
+        // Images
+        'image/jpeg',
+        'image/png',
+        
+        // MS Office (DOC/DOCX)
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        
+        // Fallbacks
+        'application/octet-stream' // For unknown types but valid extensions
     ];
 
-    // Debugging: Log all incoming files
     console.log(`[File Upload] Received: ${file.originalname}, Type: ${file.mimetype}`);
 
     if (allowedTypes.includes(file.mimetype)) {
         cb(null, true);
     } else {
-        console.warn(
-            `[File Upload] Rejected: ${file.originalname}, Unsupported Type: ${file.mimetype}`
-        );
+        // Add extension-based fallback check
+        const ext = path.extname(file.originalname).toLowerCase();
+        const validExtensions = ['.pdf', '.png', '.jpg', '.jpeg', '.doc', '.docx'];
+        
+        if (validExtensions.includes(ext)) {
+            console.warn(`[File Upload] Allowed by extension: ${file.originalname}`);
+            return cb(null, true);
+        }
+
+        console.warn(`[File Upload] Rejected: ${file.originalname}, Type: ${file.mimetype}`);
         cb(new multer.MulterError("LIMIT_UNEXPECTED_FILE", file.fieldname));
     }
 };
 
-// Create the multer instance
 const upload = multer({
     storage,
     fileFilter,
@@ -84,16 +76,14 @@ const upload = multer({
     },
 });
 
-// Middleware to handle multer errors
 export const handleFileUpload = upload.array("documents");
 
-// Error handling wrapper
 export const fileUploadMiddleware = (req: Request, res: Response, next: NextFunction) => {
     const { id } = (req as RequestWithAuth).user;
 
     handleFileUpload(req, res as Response, (err) => {
+        printf.info(`${req.files}`);
         if (err) {
-            // Handle Multer-specific errors
             if (err instanceof multer.MulterError) {
                 let message = "File upload error";
                 let clientMessage = "File upload failed";

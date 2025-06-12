@@ -15,6 +15,5 @@ export const idValidator =
                 `${label} must be a valid non-empty uuid`
             );
         }
-
         next();
     };
