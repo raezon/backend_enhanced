@@ -43,6 +43,16 @@ export const visaBookingRepo = {
         return count > 0;
     },
 
+    existsPivot: async ({ id }: { id: string }) => {
+        const count = await prisma.visaRequestPivot.count({
+            where: {
+                id,
+            },
+        });
+
+        return count > 0;
+    },
+
     findOnePivot: async ({ id }: { id: string }) => {
         // request visa pivot id
 

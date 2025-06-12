@@ -52,7 +52,7 @@ export const VisaBookingController = {
         });
 
         res.status(200).json({
-            message: "Visa booking updated successfully",
+            message: "Hadbi updated files successfully , dir refetch",
             data,
         });
     }),

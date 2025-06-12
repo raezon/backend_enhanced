@@ -13,8 +13,16 @@ const {
 
 router.post("", createVisaBooking);
 router.get("", getAllVisaBookings);
-router.get("/:id", idValidator("id", "Visa Request ID"), getVisaBookingById);
-router.delete("/:id", idValidator("id", "Visa Request ID"), deleteVisaBooking);
-router.put("/:id", idValidator("id", "Visa Request ID"), fileUploadMiddleware, updateVisaBooking);
+router.get(
+    "/:id",
+    idValidator("id", "Visa Request pivot (basicInfo with passengers)  ID"),
+    getVisaBookingById
+);
+router.delete(
+    "/:id",
+    idValidator("id", "Visa Request pivot (basicInfo with passengers)  ID"),
+    deleteVisaBooking
+);
+router.put("/:id", idValidator("id", "Visa Request pivot (basicInfo with passengers) ID"), fileUploadMiddleware, updateVisaBooking);
 
 export default router;
