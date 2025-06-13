@@ -196,17 +196,25 @@ export const PackageService = {
             packageId: Joi.string().uuid().required(),
         });
 
-        const { files, packageId } = validateInput<{
-            files: Express.Multer.File[];
-            packageId: string;
-        }>(schema, inputData);
+        const { files, packageId } = validateInput<typeof inputData>(schema, inputData);
 
-        const data = await prisma.packageImage.createMany({
-            data: files.map((file) => ({
-                packageId,
-                fileName: file.originalname,
-                url: file.filename,
-            })),
+        const data = await prisma.$transaction(async (tx) => {
+            await tx.package.update({
+                where: {
+                    id: packageId,
+                },
+
+                data: {
+                    primaryImageUrl: files[0].filename,
+                },
+            });
+
+            await tx.packageImage.createMany({
+                data: files.slice(1).map((file) => ({
+                    packageId,
+                    url: file.filename,
+                })),
+            });
         });
 
         return data;

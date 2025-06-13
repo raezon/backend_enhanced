@@ -51,6 +51,7 @@ model Package {
   importantNotes  String?
   empContract String?
   inclusion      String?
+  primaryImageUrl String?
 
   min_age_first_child Int?
   max_age_first_child Int?
@@ -62,7 +63,7 @@ model Package {
   destinations    Destination[]
   pricePerPerson  PricePerPerson? 
 
-  images  PackageImage[]
+  secondaryImages  PackageImage[]
   slots DepartureSlot[]
   conditions ConditionAnnulation[]
   steps PackageStep[]
