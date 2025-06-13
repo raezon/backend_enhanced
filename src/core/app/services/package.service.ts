@@ -1,9 +1,96 @@
 import Joi from "joi";
-import { PackageType } from "@prisma/client";
+import { PackageStepType, PackageType } from "@prisma/client";
 import { validateInput } from "@/utils/validate-input";
 import { prisma } from "@/config";
 
 export const PackageService = {
+    createPackageStep: async (inputData: {
+        packageId: string;
+        steps: {
+            type: PackageStepType;
+            hotelName: string;
+            nights: number;
+            rate: number;
+            description: string;
+            address: string;
+            primaryImage: Express.Multer.File;
+            secondaryImages: Express.Multer.File[];
+        }[];
+    }) => {
+        const stepSchema = Joi.object({
+            type: Joi.string().valid("FLIGHT", "HOTEL", "ACTIVITY").required().messages({
+                "any.required": '"type" is required',
+                "any.only": '"type" must be a valid step type',
+            }),
+
+            hotelName: Joi.string().required().messages({
+                "string.base": '"hotelName" must be a string',
+                "any.required": '"hotelName" is required',
+            }),
+
+            nights: Joi.number().integer().min(1).required().messages({
+                "number.base": '"nights" must be a number',
+                "number.integer": '"nights" must be an integer',
+                "number.min": '"nights" must be at least 1',
+                "any.required": '"nights" is required',
+            }),
+
+            rate: Joi.number().integer().min(1).max(5).required().messages({
+                "number.base": '"rate" must be a number',
+                "number.min": '"rate" must be between 1 and 5',
+                "number.max": '"rate" must be between 1 and 5',
+                "any.required": '"rate" is required',
+            }),
+
+            description: Joi.string().required().messages({
+                "string.base": '"description" must be a string',
+                "any.required": '"description" is required',
+            }),
+
+            address: Joi.string().required().messages({
+                "string.base": '"address" must be a string',
+                "any.required": '"address" is required',
+            }),
+            primaryImage: Joi.object().required().messages({
+                "any.required": '"primaryImage" is required',
+            }),
+
+            secondaryImages: Joi.array().items(Joi.object()).required().messages({
+                "array.base": '"secondaryImages" must be an array of files',
+                "any.required": '"secondaryImages" is required',
+            }),
+        });
+
+        const schema = Joi.object({
+            packageId: Joi.string().uuid().required().messages({
+                "string.guid": '"packageId" must be a valid UUID',
+                "any.required": '"packageId" is required',
+            }),
+
+            steps: Joi.array().items(stepSchema).min(1).required().messages({
+                "array.base": '"steps" must be an array',
+                "array.min": '"steps" must contain at least one step',
+                "any.required": '"steps" is required',
+            }),
+        });
+        const { packageId, steps } = validateInput<typeof inputData>(schema, inputData);
+
+        await prisma.$transaction(async (tx) => {
+            for (const step of steps) {
+                const { secondaryImages, ...rest } = step;
+                const temp = await tx.packageStep.create({
+                    data: { ...rest, packageId, primaryImageUrl: rest.primaryImage.filename },
+                });
+
+                await tx.packageStepSecondaryImages.createMany({
+                    data: secondaryImages.map((image) => ({
+                        packageStepId: temp.id,
+                        imageUrl: image.filename,
+                    })),
+                });
+            }
+        });
+    },
     createConditions: async (inputData: {
         packageId: string;
         steps: {

@@ -65,6 +65,38 @@ model Package {
   images  PackageImage[]
   slots DepartureSlot[]
   conditions ConditionAnnulation[]
+  steps PackageStep[]
+}
+
+enum PackageStepType {
+  HOTEL
+  VOL
+  TRANSFER
+  EXCURSION
+}
+
+
+model PackageStep {
+  id                String   @id @default(uuid())
+  packageId         String
+  type             PackageStepType @default(HOTEL)
+  hotelName         String
+  nights            Int
+  rate    Int  
+  description      String
+  address String
+  primaryImageUrl   String
+  package           Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  secondaryImages  PackageStepSecondaryImages[]
+}
+
+model PackageStepSecondaryImages {
+  id                String   @id @default(uuid())
+  packageStepId     String
+  imageUrl          String
+  packageStep       PackageStep @relation(fields: [packageStepId], references: [id], onDelete: Cascade)
 }
 
 model ConditionAnnulation {

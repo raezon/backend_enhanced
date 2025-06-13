@@ -3,6 +3,20 @@ import { PackageService } from "@core/app/services/package.service";
 import { Request, Response } from "express";
 
 export const PackageController = {
+    createSteps: TryCatchBlock(async (req: Request, res: Response) => {
+        const inputData = {
+            ...req.body,
+            packageId: req.params.id,
+        };
+
+        const result = await PackageService.createPackageStep(inputData);
+
+        res.status(201).json({
+            message: "Package steps created successfully",
+            data: result,
+        });
+    }),
+
     createConditions: TryCatchBlock(async (req: Request, res: Response) => {
         const inputData = {
             ...req.body,
