@@ -1,5 +1,5 @@
 import Joi from "joi";
-import { PackageStepType, PackageType } from "@prisma/client";
+import { PackagePensionType, PackageStepType, PackageType } from "@prisma/client";
 import { validateInput } from "@/utils/validate-input";
 import { prisma } from "@/config";
 
@@ -247,9 +247,27 @@ export const PackageService = {
                 infantPrice: number;
             }[];
         };
+        combinations?: {
+            name: string;
+            pension: PackagePensionType;
+            price: number;
+            majoration: number;
+            adultsNumber: number;
+            numbOfChildrenOne: number;
+            numbOfChildrenTwo: number;
+            babyPrice: number;
+        }[];
+        supplements?: {
+            name: string;
+            adultsNumber: number;
+            numbOfChildrenOne: number;
+            numbOfChildrenTwo: number;
+            babyPrice: number;
+        }[];
     }) => {
         const schema = Joi.object({
             userId: Joi.string().uuid().required(),
+
             basic: Joi.object({
                 isPublic: Joi.boolean().required(),
                 combination_active: Joi.boolean().required(),
@@ -297,44 +315,40 @@ export const PackageService = {
                     .min(1)
                     .required(),
             }).required(),
+
+            combinations: Joi.array()
+                .items(
+                    Joi.object({
+                        name: Joi.string().required(),
+                        pension: Joi.string()
+                            .valid("NONE", "FULL", "HALF", "ALL_INCLUSIVE")
+                            .required(), // assuming enum values
+                        price: Joi.number().min(0).required(),
+                        majoration: Joi.number().min(0).required(),
+                        adultsNumber: Joi.number().integer().min(0).required(),
+                        numbOfChildrenOne: Joi.number().integer().min(0).required(),
+                        numbOfChildrenTwo: Joi.number().integer().min(0).required(),
+                        babyPrice: Joi.number().min(0).required(),
+                    })
+                )
+                .optional(),
+
+            supplements: Joi.array()
+                .items(
+                    Joi.object({
+                        name: Joi.string().required(),
+                        adultsNumber: Joi.number().integer().min(0).required(),
+                        numbOfChildrenOne: Joi.number().integer().min(0).required(),
+                        numbOfChildrenTwo: Joi.number().integer().min(0).required(),
+                        babyPrice: Joi.number().min(0).required(),
+                    })
+                )
+                .optional(),
         });
 
-        const { basic, departures, destinations, pricePerPerson, userId } = validateInput<{
-            userId: string;
-            basic: {
-                isPublic: boolean;
-                combination_active: boolean;
-                isRecommended: boolean;
-                name: string;
-                displayName: string;
-                option: number;
-                priority: number;
-                departureCity: string;
-                type: PackageType;
-                shortDescription: string;
-                description?: string;
-                importantNotes?: string;
-                empContract?: string;
-                inclusion?: string;
-                min_age_first_child?: number;
-                max_age_first_child?: number;
-                min_age_second_child?: number;
-                max_age_second_child?: number;
-            };
-            departures: { name: string }[];
-            destinations: { name: string }[];
-            pricePerPerson: {
-                markupPlatform: number;
-                markupAgency: number;
-                prices: {
-                    name: string;
-                    adultPrice: number;
-                    childPrice6To11: number;
-                    childPrice2To5: number;
-                    infantPrice: number;
-                }[];
-            };
-        }>(schema, inputData);
+        const { basic, departures, destinations, pricePerPerson, userId } = validateInput<
+            typeof inputData
+        >(schema, inputData);
 
         const data = prisma.$transaction(async (tx) => {
             const createdPackage = await tx.package.create({
@@ -373,6 +387,33 @@ export const PackageService = {
                 })),
             });
 
+            const packageCombination = await tx.packageCombination.create({
+                data: {
+                    packageId: createdPackage.id,
+                },
+            });
+
+            await tx.combination.createMany({
+                data:
+                    inputData.combinations?.map((combination) => ({
+                        packageCombinationId: packageCombination.id,
+                        ...combination,
+                    })) || [],
+            });
+
+            const packageSupplement = await tx.packageSupplements.create({
+                data: {
+                    packageId: createdPackage.id,
+                },
+            });
+
+            await tx.supplements.createMany({
+                data:
+                    inputData.supplements?.map((supplement) => ({
+                        packageSupplementsId: packageSupplement.id,
+                        ...supplement,
+                    })) || [],
+            });
             return createdPackage;
         });
 

@@ -66,6 +66,63 @@ model Package {
   slots DepartureSlot[]
   conditions ConditionAnnulation[]
   steps PackageStep[]
+  packageCombinations PackageCombination[]
+  packageSupplements PackageSupplements[]
+}
+
+enum PackagePensionType {
+  ROOM_ONLY
+  BED_AND_BREAKFAST
+  HALF_BOARD
+  FULL_BOARD
+  ALL_INCLUSIVE
+}
+
+model PackageCombination {
+  id                String   @id @default(uuid())
+  packageId         String
+
+  package           Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  combination      Combination[]
+}
+
+model Combination {
+  id                String   @id @default(uuid())
+  packageCombinationId String
+  name              String
+  pension           PackagePensionType @default(ROOM_ONLY)
+  price             Float
+  majoration        Float
+  adultsNumber      Int
+  numbOfChildrenOne   Int
+  numbOfChildrenTwo   Int
+  babyPrice         Float
+
+  packageCombination PackageCombination @relation(fields: [packageCombinationId], references: [id], onDelete: Cascade)
+}
+
+model PackageSupplements {
+  id                String   @id @default(uuid())
+  packageId         String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  package           Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  supplements       Supplements[]
+}
+
+model Supplements {
+  id                String   @id @default(uuid())
+  packageSupplementsId String
+  name              String
+  adultsNumber      Int
+  numbOfChildrenOne   Int
+  numbOfChildrenTwo   Int
+  babyPrice         Float
+  packageSupplements PackageSupplements @relation(fields: [packageSupplementsId], references: [id], onDelete: Cascade)
 }
 
 enum PackageStepType {
@@ -74,7 +131,6 @@ enum PackageStepType {
   TRANSFER
   EXCURSION
 }
-
 
 model PackageStep {
   id                String   @id @default(uuid())
