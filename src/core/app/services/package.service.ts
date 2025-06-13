@@ -269,9 +269,9 @@ export const PackageService = {
             userId: Joi.string().uuid().required(),
 
             basic: Joi.object({
-                isPublic: Joi.boolean().required(),
-                combination_active: Joi.boolean().required(),
-                isRecommended: Joi.boolean().required(),
+                isPublic: Joi.boolean().optional().default(false),
+                combination_active: Joi.boolean().optional().default(false),
+                isRecommended: Joi.boolean().optional().default(false),
                 name: Joi.string().required(),
                 displayName: Joi.string().required(),
                 option: Joi.number().integer().required(),
