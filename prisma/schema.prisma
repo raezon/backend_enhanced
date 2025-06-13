@@ -63,6 +63,18 @@ model Package {
   pricePerPerson  PricePerPerson? 
 
   images  PackageImage[]
+  slots DepartureSlot[]
+}
+
+model DepartureSlot {
+  id                String   @id @default(uuid())
+  packageId         String
+  start DateTime
+  finish DateTime
+  days Int
+  nights Int
+  initialPlace Int
+  package           Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
 }
 
 model PackageImage {

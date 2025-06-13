@@ -4,6 +4,53 @@ import { validateInput } from "@/utils/validate-input";
 import { prisma } from "@/config";
 
 export const PackageService = {
+    createSlotAvailability: async (inputData: {
+        packageId: string;
+        slots: {
+            start: Date;
+            finish: Date;
+            days: number;
+            nights: number;
+            initialPlace: number;
+        }[];
+    }) => {
+        const createSchema = Joi.object({
+            packageId: Joi.string().uuid({ version: "uuidv4" }).required().label("Package ID"),
+
+            slots: Joi.array()
+                .items(
+                    Joi.object({
+                        start: Joi.date().required().label("Start date"),
+                        finish: Joi.date()
+                            .greater(Joi.ref("start"))
+                            .required()
+                            .label("Finish date"),
+                        days: Joi.number().integer().min(1).required().label("Days"),
+                        nights: Joi.number().integer().min(0).required().label("Nights"),
+                        initialPlace: Joi.number()
+                            .integer()
+                            .min(0)
+                            .required()
+                            .label("Initial place"),
+                    })
+                )
+                .min(1)
+                .required()
+                .label("Slot availability list"),
+        });
+
+        const validatedData = validateInput<typeof inputData>(createSchema, inputData);
+
+        const result = await prisma.departureSlot.createMany({
+            data: validatedData.slots.map((slot) => ({
+                ...slot,
+                packageId: validatedData.packageId,
+            })),
+        });
+
+        return result;
+    },
+
     addImages: async (inputData: { files: Express.Multer.File[]; packageId: string }) => {
         const schema = Joi.object({
             files: Joi.array()
