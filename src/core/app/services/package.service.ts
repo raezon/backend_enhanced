@@ -4,6 +4,50 @@ import { validateInput } from "@/utils/validate-input";
 import { prisma } from "@/config";
 
 export const PackageService = {
+    createConditions: async (inputData: {
+        packageId: string;
+        steps: {
+            de: Date;
+            arrival: Date;
+        }[];
+    }) => {
+        const conditionSchema = Joi.object({
+            de: Joi.date().required().messages({
+                "any.required": '"de" is required',
+                "date.base": '"de" must be a valid date',
+            }),
+            arrival: Joi.date().required().messages({
+                "any.required": '"arrival" is required',
+                "date.base": '"arrival" must be a valid date',
+            }),
+        });
+
+        const createConditionsSchema = Joi.object({
+            packageId: Joi.string().uuid().required().messages({
+                "any.required": '"packageId" is required',
+                "string.base": '"packageId" must be a string',
+                "string.guid": '"packageId" must be a valid UUID',
+            }),
+            steps: Joi.array().items(conditionSchema).min(1).required().messages({
+                "array.base": '"steps" must be an array',
+                "array.min": '"steps" must contain at least one step',
+                "any.required": '"steps" is required',
+            }),
+        });
+
+        const validatedData = validateInput<typeof inputData>(createConditionsSchema, inputData);
+
+        const data = await prisma.conditionAnnulation.createMany({
+            data: validatedData.steps.map((step) => ({
+                packageId: validatedData.packageId,
+                de: step.de,
+                arrival: step.arrival,
+            })),
+        });
+
+        return data;
+    },
+
     createSlotAvailability: async (inputData: {
         packageId: string;
         slots: {

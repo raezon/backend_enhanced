@@ -64,6 +64,15 @@ model Package {
 
   images  PackageImage[]
   slots DepartureSlot[]
+  conditions ConditionAnnulation[]
+}
+
+model ConditionAnnulation {
+  id                String   @id @default(uuid())
+  de DateTime
+  arrival DateTime
+  packageId         String
+  package          Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
 }
 
 model DepartureSlot {
