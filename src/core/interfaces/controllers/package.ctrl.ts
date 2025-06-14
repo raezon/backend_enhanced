@@ -59,7 +59,7 @@ export const PackageController = {
         const inputData = {
             files: req.files as Express.Multer.File[],
             packageId: req.params.id,
-            ...req.body,
+            images: JSON.parse(req.body.images),
         };
 
         const result = await PackageService.addImages(inputData);
