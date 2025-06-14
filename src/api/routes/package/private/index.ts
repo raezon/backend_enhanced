@@ -1,4 +1,4 @@
-import upload, { fileUploadMiddleware } from "@/config/multer";
+import upload from "@/config/multer";
 import { PackageController } from "@/core/interfaces/controllers/package.ctrl";
 import { idValidator } from "@/middlewares/id-validator";
 import express from "express";
@@ -14,7 +14,7 @@ router.post(
     addImages
 );
 router.post("/:id/step-three", idValidator("id", "Package ID"), createAvailableSlots);
-router.post("/:id/step-four", fileUploadMiddleware, idValidator("id", "Package ID"), createSteps);
+router.post("/:id/step-four", upload.any(), idValidator("id", "Package ID"), createSteps);
 router.post("/:id/step-five", idValidator("id", "Package ID"), createConditions);
 
 export default router;

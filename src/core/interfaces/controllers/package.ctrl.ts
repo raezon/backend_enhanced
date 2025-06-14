@@ -5,9 +5,26 @@ import { Request, Response } from "express";
 
 export const PackageController = {
     createSteps: TryCatchBlock(async (req: Request, res: Response) => {
+        const reqSteps = JSON.parse(req.body.steps);
+        const files = req.files as Express.Multer.File[];
+
+        const steps = reqSteps.map((step, index) => {
+            const primaryImage = files.find((f) => f.fieldname === `stepImages-primary-${index}`);
+
+            const secondaryImages = files.filter((f) =>
+                f.fieldname.startsWith(`stepImages-secondary-${index}`)
+            );
+
+            return {
+                ...step,
+                primaryImage,
+                secondaryImages,
+            };
+        });
+
         const inputData = {
-            ...req.body,
             packageId: req.params.id,
+            steps,
         };
 
         const result = await PackageService.createPackageStep(inputData);
