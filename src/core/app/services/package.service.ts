@@ -6,7 +6,7 @@ import {
     PackageType,
 } from "@prisma/client";
 import { validateInput } from "@/utils/validate-input";
-import { prisma } from "@/config";
+import { Env, prisma } from "@/config";
 import { ConstraintError } from "../base/constraint-error";
 
 export const PackageService = {
@@ -216,7 +216,53 @@ export const PackageService = {
         return result;
     },
 
-    addImages: async (inputData: { files: Express.Multer.File[]; packageId: string }) => {},
+    addImages: async (inputData: {
+        files: Express.Multer.File[];
+        packageId: string;
+        images: {
+            isPrimary: boolean;
+        }[];
+    }) => {
+        const schema = Joi.object({
+            files: Joi.array().items(Joi.object().required()).min(1).required().label("Files"),
+
+            packageId: Joi.string().uuid().required().label("Package ID"),
+
+            images: Joi.array()
+                .items(
+                    Joi.object({
+                        isPrimary: Joi.boolean().required().label("Is Primary"),
+                    })
+                )
+                .min(1)
+                .required()
+                .label("Images"),
+        });
+
+        const { files, packageId, images } = validateInput<typeof inputData>(schema, inputData);
+
+        const packageExists = await prisma.package.count({
+            where: { id: packageId },
+        });
+        if (packageExists === 0) {
+            throw new ConstraintError(
+                "Package does not exist",
+                404,
+                "NOT_FOUND",
+                "package does not exist in the database"
+            );
+        }
+
+        const data = await prisma.packageImage.createMany({
+            data: files.map((file, index) => ({
+                packageId,
+                imageUrl: `${Env.BASE_URL}/uploads/documents/${file.filename}`,
+                isPrimary: images[index].isPrimary,
+            })),
+        });
+
+        return data;
+    },
 
     createNewPackage: async (inputData: {
         userId: string;
