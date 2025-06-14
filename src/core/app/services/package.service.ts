@@ -138,8 +138,8 @@ export const PackageService = {
     createSlotAvailability: async (inputData: {
         packageId: string;
         slots: {
-            start: Date;
-            finish: Date;
+            start: string;
+            finish: string;
             days: number;
             nights: number;
             initialPlace: number;
@@ -151,23 +151,20 @@ export const PackageService = {
             slots: Joi.array()
                 .items(
                     Joi.object({
-                        start: Joi.date().required().label("Start date"),
-                        finish: Joi.date()
-                            .greater(Joi.ref("start"))
-                            .required()
-                            .label("Finish date"),
+                        start: Joi.string().isoDate().required().label("Start Date"),
+                        finish: Joi.string().isoDate().required().label("Finish Date"),
                         days: Joi.number().integer().min(1).required().label("Days"),
                         nights: Joi.number().integer().min(0).required().label("Nights"),
                         initialPlace: Joi.number()
                             .integer()
                             .min(0)
                             .required()
-                            .label("Initial place"),
+                            .label("Initial Place"),
                     })
                 )
                 .min(1)
                 .required()
-                .label("Slot availability list"),
+                .label("Slots"),
         });
 
         const validatedData = validateInput<typeof inputData>(createSchema, inputData);
