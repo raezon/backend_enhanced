@@ -123,5 +123,127 @@ export const VisaBookingService = {
         });
     },
 
-    updateVisaRequest: async () => {},
+    updateVisaRequest: async (inputData: {
+        pivotId: string;
+        basicInfos: {
+            travelStartingDate: string;
+            status: string;
+            nationality: string;
+            notes: string;
+            id: string;
+        };
+        passenger: {
+            id: string;
+            name: string;
+            surname: string;
+            placeOfBirth: string;
+            dateOfBirth: string;
+            email: string;
+            phone: string;
+            passportNumber: string;
+            passportDeliveryDate: string;
+            passportExpirationDate: string;
+        };
+
+        deletedFiles: { id: string }[];
+        files: Express.Multer.File[];
+    }) => {
+        const updateVisaRequestSchema = Joi.object({
+            pivotId: Joi.string().uuid().optional().messages({
+                "string.uuid": "pivotId must be a valid UUID.",
+            }),
+
+            basicInfos: Joi.object({
+                travelStartingDate: Joi.string().isoDate().optional().messages({
+                    "string.isoDate": "Travel starting date must be a valid ISO date.",
+                }),
+                status: Joi.string().optional(),
+                nationality: Joi.string().optional(),
+                notes: Joi.string().allow("").optional(),
+                id: Joi.string().uuid().optional().messages({
+                    "string.uuid": "pivotId must be a valid UUID.",
+                }),
+            }).optional(),
+
+            passenger: Joi.object({
+                id: Joi.string().uuid().optional().messages({
+                    "string.uuid": "Passenger id must be a valid UUID.",
+                }),
+                name: Joi.string().optional(),
+                surname: Joi.string().optional(),
+                placeOfBirth: Joi.string().optional(),
+                dateOfBirth: Joi.string().isoDate().optional().messages({
+                    "string.isoDate": "Date of birth must be a valid ISO date.",
+                }),
+                email: Joi.string().email().optional(),
+                phone: Joi.string().optional(),
+                passportNumber: Joi.string().optional(),
+                passportDeliveryDate: Joi.string().isoDate().optional().messages({
+                    "string.isoDate": "Passport delivery date must be a valid ISO date.",
+                }),
+                passportExpirationDate: Joi.string().isoDate().optional().messages({
+                    "string.isoDate": "Passport expiration date must be a valid ISO date.",
+                }),
+            }).optional(),
+
+            deletedFiles: Joi.array()
+                .items(
+                    Joi.object({
+                        id: Joi.string().uuid().required().messages({
+                            "string.uuid": "File id must be a valid UUID.",
+                        }),
+                    })
+                )
+                .optional(),
+
+            files: Joi.any().optional(), // still handled by multer middleware
+        });
+
+        const {
+            basicInfos: { id: visaRequestId, ...rest },
+            deletedFiles,
+            files,
+            passenger,
+        } = validateInput<typeof inputData>(updateVisaRequestSchema, inputData);
+
+        await prisma.$transaction(async (tx) => {
+            const visaRequest = await tx.visaRequest.update({
+                where: {
+                    id: visaRequestId,
+                },
+                data: rest,
+            });
+
+            if (deletedFiles.length > 0) {
+                for (const file of deletedFiles) {
+                    await tx.passengerDocuments.delete({
+                        where: {
+                            passengerId_documentId: {
+                                documentId: file.id,
+                                passengerId: passenger.id,
+                            },
+                        },
+                    });
+                }
+            }
+
+            if (files.length > 0) {
+                for (const file of files) {
+                    const savedFile = await tx.passengerDocumentsFiles.create({
+                        data: {
+                            filePath: file.filename, // stored filename only
+                            fileType: file.mimetype,
+                            name: file.originalname,
+                        },
+                    });
+                    const doc = await tx.passengerDocuments.create({
+                        data: {
+                            passengerId: passenger.id,
+                            documentId: savedFile.id,
+                        },
+                    });
+                }
+            }
+        });
+    },
 };

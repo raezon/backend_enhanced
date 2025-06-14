@@ -44,14 +44,17 @@ export const VisaBookingController = {
     updateVisaBooking: TryCatchBlock(async (req: Request, res: Response) => {
         const { id } = req.params;
 
+        const files = req.files as Express.Multer.File[] | [];
+        const body = JSON.parse(JSON.stringify(req.body));
 
-        // const data = await VisaBookingService.updateVisaRequest({
-
-        // });
+        await VisaBookingService.updateVisaRequest({
+            pivotId: id,
+            files,
+            ...body,
+        });
 
         res.status(200).json({
             message: "Hadbi updated files successfully , dir refetch",
-            // data,
         });
     }),
 

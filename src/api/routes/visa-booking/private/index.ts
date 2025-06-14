@@ -1,4 +1,4 @@
-import { fileUploadMiddleware } from "@/config/multer";
+import upload, { fileUploadMiddleware } from "@/config/multer";
 import { VisaBookingController } from "@/core/interfaces/controllers/visa-booking.ctrl";
 import { idValidator } from "@/middlewares/id-validator";
 import express from "express";
@@ -27,7 +27,7 @@ router.delete(
 router.put(
     "/:id",
     idValidator("id", "Visa Request pivot ID"),
-    fileUploadMiddleware, 
-    updateVisaBooking    
+    upload.array("update-passenger"),
+    updateVisaBooking
 );
 export default router;
