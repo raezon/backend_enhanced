@@ -1,9 +1,89 @@
 import Joi from "joi";
-import { PackagePensionType, PackageStepType, PackageType } from "@prisma/client";
+import {
+    ConditionAnnulationType,
+    PackagePensionType,
+    PackageStepType,
+    PackageType,
+} from "@prisma/client";
 import { validateInput } from "@/utils/validate-input";
 import { prisma } from "@/config";
+import { ConstraintError } from "../base/constraint-error";
 
 export const PackageService = {
+    createConditions: async (inputData: {
+        packageId: string;
+        conditions: {
+            de: Date;
+            arrival: Date;
+            nights?: number;
+            percentage?: number;
+            fixedPrice?: number;
+            type?: ConditionAnnulationType;
+        }[];
+    }) => {
+        const stepSchema = Joi.object({
+            de: Joi.date().iso().required().messages({
+                "date.base": '"de" must be a valid date',
+                "any.required": '"de" is required',
+            }),
+            arrival: Joi.date().iso().required().messages({
+                "date.base": '"arrival" must be a valid date',
+                "any.required": '"arrival" is required',
+            }),
+            nights: Joi.number().integer().min(1).optional().messages({
+                "number.base": '"nights" must be a number',
+                "number.integer": '"nights" must be an integer',
+                "number.min": '"nights" must be at least 1',
+                "any.required": '"nights" is required',
+            }),
+            percentage: Joi.number().min(0).max(100).optional(),
+            fixedPrice: Joi.number().min(0).optional(),
+            type: Joi.string().valid("PERCENTAGE", "FIXED_PRICE").optional().messages({
+                "any.only": '"type" must be a valid condition type',
+                "any.required": '"type" is required',
+            }),
+        });
+
+        const schema = Joi.object({
+            packageId: Joi.string().uuid().required().messages({
+                "string.guid": '"packageId" must be a valid UUID',
+                "any.required": '"packageId" is required',
+            }),
+            steps: Joi.array().items(stepSchema).min(1).required().messages({
+                "array.base": '"steps" must be an array',
+                "array.min": '"steps" must contain at least one step',
+                "any.required": '"steps" is required',
+            }),
+        });
+        const { packageId, steps } = validateInput<typeof inputData>(schema, inputData);
+
+        const packageExists = await prisma.package.count({
+            where: { id: packageId },
+        });
+        if (packageExists === 0) {
+            throw new ConstraintError(
+                "Package does not exist",
+                404,
+                "NOT_FOUND",
+                "package does not exist in the database"
+            );
+        }
+
+        const data = await prisma.conditionAnnulation.createMany({
+            data: steps.map((step) => ({
+                packageId,
+                de: step.de,
+                arrival: step.arrival,
+                nights: step.nights ?? null,
+                percentage: step.percentage ?? null,
+                fixedPrice: step.fixedPrice ?? null,
+                type: step.type,
+            })),
+        });
+
+        return data;
+    },
+
     createPackageStep: async (inputData: {
         packageId: string;
         steps: {
@@ -91,49 +171,6 @@ export const PackageService = {
             }
         });
     },
-    createConditions: async (inputData: {
-        packageId: string;
-        steps: {
-            de: Date;
-            arrival: Date;
-        }[];
-    }) => {
-        const conditionSchema = Joi.object({
-            de: Joi.date().required().messages({
-                "any.required": '"de" is required',
-                "date.base": '"de" must be a valid date',
-            }),
-            arrival: Joi.date().required().messages({
-                "any.required": '"arrival" is required',
-                "date.base": '"arrival" must be a valid date',
-            }),
-        });
-
-        const createConditionsSchema = Joi.object({
-            packageId: Joi.string().uuid().required().messages({
-                "any.required": '"packageId" is required',
-                "string.base": '"packageId" must be a string',
-                "string.guid": '"packageId" must be a valid UUID',
-            }),
-            steps: Joi.array().items(conditionSchema).min(1).required().messages({
-                "array.base": '"steps" must be an array',
-                "array.min": '"steps" must contain at least one step',
-                "any.required": '"steps" is required',
-            }),
-        });
-
-        const validatedData = validateInput<typeof inputData>(createConditionsSchema, inputData);
-
-        const data = await prisma.conditionAnnulation.createMany({
-            data: validatedData.steps.map((step) => ({
-                packageId: validatedData.packageId,
-                de: step.de,
-                arrival: step.arrival,
-            })),
-        });
-
-        return data;
-    },
 
     createSlotAvailability: async (inputData: {
         packageId: string;
@@ -179,43 +216,7 @@ export const PackageService = {
         return result;
     },
 
-    addImages: async (inputData: { files: Express.Multer.File[]; packageId: string }) => {
-        const schema = Joi.object({
-            files: Joi.array()
-                .items(
-                    Joi.object({
-                        originalname: Joi.string().required(),
-                        buffer: Joi.binary().required(),
-                    })
-                )
-                .min(1)
-                .required(),
-            packageId: Joi.string().uuid().required(),
-        });
-
-        const { files, packageId } = validateInput<typeof inputData>(schema, inputData);
-
-        const data = await prisma.$transaction(async (tx) => {
-            await tx.package.update({
-                where: {
-                    id: packageId,
-                },
-
-                data: {
-                    primaryImageUrl: files[0].filename,
-                },
-            });
-
-            await tx.packageImage.createMany({
-                data: files.slice(1).map((file) => ({
-                    packageId,
-                    url: file.filename,
-                })),
-            });
-        });
-
-        return data;
-    },
+    addImages: async (inputData: { files: Express.Multer.File[]; packageId: string }) => {},
 
     createNewPackage: async (inputData: {
         userId: string;

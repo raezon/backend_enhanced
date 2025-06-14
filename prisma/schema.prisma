@@ -162,14 +162,14 @@ model Package {
   destinations    Destination[]
   pricePerPerson  PricePerPerson? 
 
-  packageCombinations PackageCombination[]
-  packageSupplements PackageSupplements[]
+  packageCombinations PackageCombination[] // step 1
+  packageSupplements PackageSupplements[] // step 1
 
-  packageImages    PackageImage[]
+  packageImages    PackageImage[] // step 2
 
-  slots DepartureSlot[]
-  conditions ConditionAnnulation[]
-  steps PackageStep[]
+  slots DepartureSlot[] // step 3
+  conditions ConditionAnnulation[] // step 5
+  steps PackageStep[] // step 4
 
 }
 
@@ -235,10 +235,19 @@ model PackageStepSecondaryImages {
 
 // start of step 5 of creating package (conditions and cancellation)
 
+enum ConditionAnnulationType {
+  PERCENTAGE
+  FIXED_PRICE
+}
+
 model ConditionAnnulation {
   id                String   @id @default(uuid())
   de DateTime
   arrival DateTime
+  nights Int?
+  percentage Float?
+  fixedPrice Float?
+  type ConditionAnnulationType? @default(FIXED_PRICE)
   packageId         String
   package          Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
 }
