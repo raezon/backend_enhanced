@@ -93,81 +93,53 @@ export const PackageService = {
             rate: number;
             description: string;
             address: string;
-            primaryImage: Express.Multer.File;
-            secondaryImages: Express.Multer.File[];
         }[];
+        primaryImage: Express.Multer.File;
+        secondaryImages: Express.Multer.File[];
     }) => {
         const stepSchema = Joi.object({
-            type: Joi.string().valid("FLIGHT", "HOTEL", "ACTIVITY").required().messages({
-                "any.required": '"type" is required',
-                "any.only": '"type" must be a valid step type',
-            }),
-
-            hotelName: Joi.string().required().messages({
-                "string.base": '"hotelName" must be a string',
-                "any.required": '"hotelName" is required',
-            }),
-
-            nights: Joi.number().integer().min(1).required().messages({
-                "number.base": '"nights" must be a number',
-                "number.integer": '"nights" must be an integer',
-                "number.min": '"nights" must be at least 1',
-                "any.required": '"nights" is required',
-            }),
-
-            rate: Joi.number().integer().min(1).max(5).required().messages({
-                "number.base": '"rate" must be a number',
-                "number.min": '"rate" must be between 1 and 5',
-                "number.max": '"rate" must be between 1 and 5',
-                "any.required": '"rate" is required',
-            }),
-
-            description: Joi.string().required().messages({
-                "string.base": '"description" must be a string',
-                "any.required": '"description" is required',
-            }),
-
-            address: Joi.string().required().messages({
-                "string.base": '"address" must be a string',
-                "any.required": '"address" is required',
-            }),
-            primaryImage: Joi.object().required().messages({
-                "any.required": '"primaryImage" is required',
-            }),
-
-            secondaryImages: Joi.array().items(Joi.object()).required().messages({
-                "array.base": '"secondaryImages" must be an array of files',
-                "any.required": '"secondaryImages" is required',
-            }),
+            type: Joi.string()
+                .valid("HOTEL", "VOL", "TRANSFER", "EXCURSION")
+                .required()
+                .label("Step Type"),
+            hotelName: Joi.string().required().label("Hotel Name"),
+            nights: Joi.number().integer().min(1).required().label("Nights"),
+            rate: Joi.number().min(0).max(5).required().label("Rate"),
+            description: Joi.string().required().label("Description"),
+            address: Joi.string().required().label("Address"),
         });
 
         const schema = Joi.object({
-            packageId: Joi.string().uuid().required().messages({
-                "string.guid": '"packageId" must be a valid UUID',
-                "any.required": '"packageId" is required',
-            }),
-
-            steps: Joi.array().items(stepSchema).min(1).required().messages({
-                "array.base": '"steps" must be an array',
-                "array.min": '"steps" must contain at least one step',
-                "any.required": '"steps" is required',
-            }),
+            packageId: Joi.string().uuid({ version: "uuidv4" }).required().label("Package ID"),
+            steps: Joi.array().items(stepSchema).min(1).required().label("Steps"),
+            primaryImage: Joi.object().required().label("Primary Image"),
+            secondaryImages: Joi.array()
+                .items(Joi.object())
+                .min(0)
+                .optional()
+                .label("Secondary Images"),
         });
-        const { packageId, steps } = validateInput<typeof inputData>(schema, inputData);
 
-        await prisma.$transaction(async (tx) => {
+        const { packageId, primaryImage, secondaryImages, steps } = validateInput<typeof inputData>(
+            schema,
+            inputData
+        );
+
+        const packageExists = await prisma.package.count({
+            where: { id: packageId },
+        });
+        if (packageExists === 0) {
+            throw new ConstraintError(
+                "Package does not exist",
+                404,
+                "NOT_FOUND",
+                "package does not exist in the database"
+            );
+        }
+
+        const data = await prisma.$transaction(async (tx) => {
             for (const step of steps) {
-                const { secondaryImages, ...rest } = step;
-                const temp = await tx.packageStep.create({
-                    data: { ...rest, packageId, primaryImageUrl: rest.primaryImage.filename },
-                });
 
-                await tx.packageStepSecondaryImages.createMany({
-                    data: secondaryImages.map((image) => ({
-                        packageStepId: temp.id,
-                        imageUrl: image.filename,
-                    })),
-                });
             }
         });
     },
@@ -223,6 +195,9 @@ export const PackageService = {
             isPrimary: boolean;
         }[];
     }) => {
+
+        console.log(inputData);
+
         const schema = Joi.object({
             files: Joi.array().items(Joi.object().required()).min(1).required().label("Files"),
 

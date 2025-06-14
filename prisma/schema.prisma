@@ -201,7 +201,7 @@ model DepartureSlot {
   package           Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
 }
 
-// start of step 3 of creating package (availability)
+// end of step 3 of creating package (availability)
 
 enum PackageStepType {
   HOTEL
@@ -219,10 +219,13 @@ model PackageStep {
   rate    Int  
   description      String
   address String
+
   primaryImageUrl   String
+
   package           Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+  
   secondaryImages  PackageStepSecondaryImages[]
 }
 
