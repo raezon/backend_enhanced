@@ -211,7 +211,7 @@ CREATE TABLE "ConditionAnnulation" (
     "nights" INTEGER,
     "percentage" DOUBLE PRECISION,
     "fixedPrice" DOUBLE PRECISION,
-    "type" "ConditionAnnulationType" NOT NULL DEFAULT 'FIXED_PRICE',
+    "type" "ConditionAnnulationType" DEFAULT 'FIXED_PRICE',
     "packageId" TEXT NOT NULL,
 
     CONSTRAINT "ConditionAnnulation_pkey" PRIMARY KEY ("id")
