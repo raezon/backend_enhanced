@@ -49,13 +49,13 @@ export const PackageService = {
                 "string.guid": '"packageId" must be a valid UUID',
                 "any.required": '"packageId" is required',
             }),
-            steps: Joi.array().items(stepSchema).min(1).required().messages({
+            conditions: Joi.array().items(stepSchema).min(1).required().messages({
                 "array.base": '"steps" must be an array',
                 "array.min": '"steps" must contain at least one step',
                 "any.required": '"steps" is required',
             }),
         });
-        const { packageId, steps } = validateInput<typeof inputData>(schema, inputData);
+        const { packageId, conditions } = validateInput<typeof inputData>(schema, inputData);
 
         const packageExists = await prisma.package.count({
             where: { id: packageId },
@@ -70,7 +70,7 @@ export const PackageService = {
         }
 
         const data = await prisma.conditionAnnulation.createMany({
-            data: steps.map((step) => ({
+            data: conditions.map((step) => ({
                 packageId,
                 de: step.de,
                 arrival: step.arrival,
