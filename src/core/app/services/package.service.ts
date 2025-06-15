@@ -22,8 +22,13 @@ export const PackageService = {
                 },
                 combinations: true,
                 supplements: true,
-                steps: true,
+                steps: {
+                    include: {
+                        secondaryImages: true,
+                    },
+                },
                 conditions: true,
+                packageImages: true,
             },
         });
 
@@ -52,8 +57,13 @@ export const PackageService = {
                 },
                 combinations: true,
                 supplements: true,
-                steps: true,
+                steps: {
+                    include: {
+                        secondaryImages: true,
+                    },
+                },
                 conditions: true,
+                packageImages: true,
             },
         });
 
