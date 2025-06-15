@@ -10,6 +10,45 @@ import { Env, prisma } from "@/config";
 import { ConstraintError } from "../base/constraint-error";
 
 export const PackageService = {
+    getPackageById: async (id: string) => {
+        const schema = Joi.object({
+            id: Joi.string().uuid({ version: "uuidv4" }).required().messages({
+                "string.guid": '"id" must be a valid UUID',
+                "any.required": '"id" is required',
+            }),
+        });
+
+        const { id: packageId } = validateInput<{ id: string }>(schema, { id });
+        
+        const packageData = await prisma.package.findUnique({
+            where: { id: packageId },
+            include: {
+                departures: true,
+                destinations: true,
+                pricePerPerson: {
+                    include: {
+                        prices: true,
+                    },
+                },
+                combinations: true,
+                supplements: true,
+                steps: true,
+                conditions: true,
+            },
+        });
+
+        if (!packageData) {
+            throw new ConstraintError(
+                "Package not found",
+                404,
+                "NOT_FOUND",
+                "No package found with the provided ID"
+            );
+        }
+
+        return packageData;
+    },
+
     createConditions: async (inputData: {
         packageId: string;
         conditions: {

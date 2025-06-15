@@ -4,8 +4,14 @@ import { idValidator } from "@/middlewares/id-validator";
 import express from "express";
 const router = express.Router();
 
-const { createPackage, addImages, createAvailableSlots, createConditions, createSteps } =
-    PackageController;
+const {
+    createPackage,
+    addImages,
+    createAvailableSlots,
+    createConditions,
+    createSteps,
+    getPackageById,
+} = PackageController;
 router.post("/step-one", createPackage);
 router.post(
     "/:id/step-two",
@@ -16,5 +22,6 @@ router.post(
 router.post("/:id/step-three", idValidator("id", "Package ID"), createAvailableSlots);
 router.post("/:id/step-four", upload.any(), idValidator("id", "Package ID"), createSteps);
 router.post("/:id/step-five", idValidator("id", "Package ID"), createConditions);
+router.get("/:id", idValidator("id", "Package ID"), getPackageById);
 
 export default router;
