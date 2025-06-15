@@ -57,12 +57,16 @@ model Price {
 model PackageCombination {
   id                String   @id @default(uuid())
   packageId         String
-
   package           Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  combination      Combination[]
+  name              String
+  pension           PackagePensionType @default(ROOM_ONLY)
+  price             Float
+  majoration        Float
+  adultsNumber      Int
+  numbOfChildrenOne   Int
+  numbOfChildrenTwo   Int
+  babyPrice         Float
+  
 }
 
 enum PackagePensionType {
@@ -73,40 +77,16 @@ enum PackagePensionType {
   ALL_INCLUSIVE
 }
 
-model Combination {
-  id                String   @id @default(uuid())
-  packageCombinationId String
-  name              String
-  pension           PackagePensionType @default(ROOM_ONLY)
-  price             Float
-  majoration        Float
-  adultsNumber      Int
-  numbOfChildrenOne   Int
-  numbOfChildrenTwo   Int
-  babyPrice         Float
-
-  packageCombination PackageCombination @relation(fields: [packageCombinationId], references: [id], onDelete: Cascade)
-}
-
 model PackageSupplements {
   id                String   @id @default(uuid())
   packageId         String
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
 
   package           Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  supplements       Supplements[]
-}
-
-model Supplements {
-  id                String   @id @default(uuid())
-  packageSupplementsId String
   name              String
   adultsNumber      Int
   numbOfChildrenOne   Int
   numbOfChildrenTwo   Int
   babyPrice         Float
-  packageSupplements PackageSupplements @relation(fields: [packageSupplementsId], references: [id], onDelete: Cascade)
 }
 
 model Departure {
@@ -162,8 +142,8 @@ model Package {
   destinations    Destination[]
   pricePerPerson  PricePerPerson? 
 
-  packageCombinations PackageCombination[] // step 1
-  packageSupplements PackageSupplements[] // step 1
+  combinations PackageCombination[] // step 1
+  supplements PackageSupplements[] // step 1
 
   packageImages    PackageImage[] // step 2
 

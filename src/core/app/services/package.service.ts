@@ -381,7 +381,13 @@ export const PackageService = {
                     Joi.object({
                         name: Joi.string().required(),
                         pension: Joi.string()
-                            .valid("NONE", "FULL", "HALF", "ALL_INCLUSIVE")
+                            .valid(
+                                "ROOM_ONLY",
+                                "BED_AND_BREAKFAST",
+                                "HALF_BOARD",
+                                "FULL_BOARD",
+                                "ALL_INCLUSIVE"
+                            )
                             .required(), // assuming enum values
                         price: Joi.number().min(0).required(),
                         majoration: Joi.number().min(0).required(),
@@ -406,9 +412,15 @@ export const PackageService = {
                 .optional(),
         });
 
-        const { basic, departures, destinations, pricePerPerson, userId } = validateInput<
-            typeof inputData
-        >(schema, inputData);
+        const {
+            basic,
+            departures,
+            destinations,
+            pricePerPerson,
+            userId,
+            combinations,
+            supplements,
+        } = validateInput<typeof inputData>(schema, inputData);
 
         const data = prisma.$transaction(async (tx) => {
             const createdPackage = await tx.package.create({
@@ -447,33 +459,27 @@ export const PackageService = {
                 })),
             });
 
-            const packageCombination = await tx.packageCombination.create({
-                data: {
-                    packageId: createdPackage.id,
-                },
-            });
+            if (basic.combination_active) {
+                await tx.packageCombination.createMany({
+                    data:
+                        combinations?.map((c) => {
+                            return {
+                                ...c,
+                                packageId: createdPackage.id,
+                            };
+                        }) || [],
+                });
 
-            await tx.combination.createMany({
-                data:
-                    inputData.combinations?.map((combination) => ({
-                        packageCombinationId: packageCombination.id,
-                        ...combination,
-                    })) || [],
-            });
-
-            const packageSupplement = await tx.packageSupplements.create({
-                data: {
-                    packageId: createdPackage.id,
-                },
-            });
-
-            await tx.supplements.createMany({
-                data:
-                    inputData.supplements?.map((supplement) => ({
-                        packageSupplementsId: packageSupplement.id,
-                        ...supplement,
-                    })) || [],
-            });
+                await tx.packageSupplements.createMany({
+                    data:
+                        supplements?.map((s) => {
+                            return {
+                                ...s,
+                                packageId: createdPackage.id,
+                            };
+                        }) || [],
+                });
+            }
             return createdPackage;
         });
 

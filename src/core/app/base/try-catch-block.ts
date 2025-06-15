@@ -8,6 +8,7 @@ export const TryCatchBlock = (fn: RequestHandler): RequestHandler => {
             await fn(req, res, next);
         } catch (error: unknown) {
             printf.error(`Error caught in TryCatchBlock: ${JSON.stringify(error)}`);
+            console.error(`Error caught in TryCatchBlock: ${error}`);
 
             if (error instanceof ConstraintError) {
                 return res.status(error.status).json({
