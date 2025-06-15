@@ -6,6 +6,9 @@ import { Request, Response } from "express";
 export const PackageController = {
     createSteps: TryCatchBlock(async (req: Request, res: Response) => {
         const reqSteps = JSON.parse(req.body.steps);
+        console.log("Received steps:", reqSteps);
+        console.log("original steps:", req.body);
+
         const files = req.files as Express.Multer.File[];
 
         const steps = reqSteps.map((step, index) => {
