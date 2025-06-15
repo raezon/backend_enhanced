@@ -4,93 +4,120 @@ import { flags } from "./countries";
 
 const prisma = new PrismaClient();
 
-const roles = ["super_admin", "system_admin", "platform_staff", "agent", "agency_admin"];
+const roles = ["super_admin", "custom_admin", "platform_staff", "agent", "agency_admin", "client"];
+
+const productSections = ["flying", "hotel", "visa"];
 
 async function seedCountries() {
-    console.log("Starting country seeding...");
-
+    console.log("🌍 Seeding countries...");
     for (const country of flags) {
-        const existingCountry = await prisma.country.findUnique({
-            where: { name: country.key },
-        });
-
-        if (!existingCountry) {
+        const existing = await prisma.country.findUnique({ where: { name: country.key } });
+        if (!existing) {
             await prisma.country.create({
-                data: {
-                    name: country.key,
-                    flagUrl: country.val,
-                },
+                data: { name: country.key, flagUrl: country.val },
             });
             console.log(`Created country: ${country.key}`);
-        } else {
-            console.log(`Country already exists: ${country.key}`);
         }
     }
-
-    console.log("Country seeding completed!");
+    console.log("✅ Country seeding done!");
 }
 
-async function seedAllPermission() {
-    let allPermission = await prisma.permission.findUnique({
-        where: { identifier: "all:*" },
-    });
+async function createPermission(resource: string, action: string) {
+    const identifier = `${resource}:${action}`;
+    let permission = await prisma.permission.findUnique({ where: { identifier } });
 
-    if (!allPermission) {
-        allPermission = await prisma.permission.create({
-            data: {
-                identifier: "all:*",
-                resource: "all",
-                action: "*",
+    if (!permission) {
+        permission = await prisma.permission.create({
+            data: { resource, action, identifier },
+        });
+        console.log(`Created permission: ${identifier}`);
+    }
+
+    return permission;
+}
+
+async function seedPermissions() {
+    console.log("🔐 Seeding permissions...");
+
+    const allPermissions: any[] = [];
+
+    // Full access permission
+    allPermissions.push(await createPermission("all", "*"));
+
+    // Platform staff permission: view all
+    allPermissions.push(await createPermission("all", "view"));
+
+    // Product-specific permissions
+    for (const section of productSections) {
+        allPermissions.push(await createPermission(section, "view"));
+        allPermissions.push(await createPermission(section, "subscribe"));
+    }
+
+    return allPermissions;
+}
+
+async function assignPermissions(
+    roleName: string,
+    permissions: { resource: string; action: string }[]
+) {
+    const role = await prisma.role.findUnique({ where: { name: roleName } });
+    if (!role) return;
+
+    for (const perm of permissions) {
+        const identifier = `${perm.resource}:${perm.action}`;
+        const permission = await prisma.permission.findUnique({ where: { identifier } });
+        if (!permission) continue;
+
+        await prisma.rolePermissions.upsert({
+            where: { roleId_permissionId: { roleId: role.id, permissionId: permission.id } },
+            create: {
+                roleId: role.id,
+                permissionId: permission.id,
             },
+            update: {},
         });
-        console.log("Permission 'all:*' created.");
-    } else {
-        console.log("Permission 'all:*' already exists.");
-    }
 
-    return allPermission;
+        console.log(`→ Linked ${identifier} to role '${roleName}'`);
+    }
 }
 
-async function seedRolesWithPermissions(allPermissionId: string) {
-    for (const roleName of roles) {
-        const existingRole = await prisma.role.findUnique({
-            where: { name: roleName },
-        });
-
-        if (!existingRole) {
-            await prisma.role.create({
-                data: {
-                    name: roleName,
-                    isDefault: false,
-                    permissions: {
-                        create: {
-                            permissionId: allPermissionId,
-                        },
-                    },
-                },
-            });
-            console.log(`Role '${roleName}' created with 'all:*' permission.`);
-        } else {
-            console.log(`Role '${roleName}' already exists.`);
+async function seedRoles() {
+    console.log("👥 Seeding roles...");
+    for (const name of roles) {
+        const exists = await prisma.role.findUnique({ where: { name } });
+        if (!exists) {
+            await prisma.role.create({ data: { name, isDefault: false } });
+            console.log(`Created role: ${name}`);
         }
+    }
+}
+
+async function seedRolePermissions() {
+    // Define permission sets per role
+    await assignPermissions("super_admin", [{ resource: "all", action: "*" }]);
+
+    // custom_admin → no permissions by default
+
+    await assignPermissions("platform_staff", [{ resource: "all", action: "view" }]);
+
+    const productPerms = productSections.flatMap((section) => [
+        { resource: section, action: "view" },
+        { resource: section, action: "subscribe" },
+    ]);
+
+    for (const role of ["agent", "agency_admin", "client"]) {
+        await assignPermissions(role, productPerms);
     }
 }
 
 async function seedSuperAdminUser() {
-    const superAdminRole = await prisma.role.findUnique({
-        where: { name: "super_admin" },
-    });
+    const role = await prisma.role.findUnique({ where: { name: "super_admin" } });
+    if (!role) throw new Error("Missing super_admin role");
 
-    if (!superAdminRole) {
-        throw new Error("super_admin role not found! Cannot create user.");
-    }
+    const exists = await prisma.user.findUnique({ where: { username: "superadmin" } });
 
-    const existingUser = await prisma.user.findUnique({
-        where: { username: "superadmin" },
-    });
-
-    if (!existingUser) {
-        const hashedPassword = await bcrypt.hash("superadmin", 10);
+    if (!exists) {
+        const hashed = await bcrypt.hash("superadmin", 10);
 
         await prisma.user.create({
             data: {
@@ -98,31 +125,29 @@ async function seedSuperAdminUser() {
                 lastName: "Doe",
                 username: "superadmin",
                 email: "superadmin@example.com",
-                password: hashedPassword,
+                password: hashed,
                 phoneNumber: "0606060606",
-                address: "Some address",
-                roleId: superAdminRole.id,
+                address: "Head Office",
+                roleId: role.id,
             },
         });
 
-        console.log("SuperAdmin user created successfully!");
+        console.log("✅ Superadmin user created!");
     } else {
-        console.log("SuperAdmin user already exists.");
+        console.log("ℹ️ Superadmin user already exists.");
     }
 }
 
 async function main() {
-    console.log("🌱 Starting seed process...");
+    console.log("🌱 Seeding process started...");
 
     await seedCountries();
-
-    const allPermission = await seedAllPermission();
-
-    await seedRolesWithPermissions(allPermission.id);
-
+    await seedPermissions();
+    await seedRoles();
+    await seedRolePermissions();
     await seedSuperAdminUser();
 
-    console.log("✅ Seed process completed successfully!");
+    console.log("🌟 Seeding completed successfully.");
 }
 
 export default main;
