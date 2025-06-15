@@ -4,6 +4,15 @@ import { PackageService } from "@core/app/services/package.service";
 import { Request, Response } from "express";
 
 export const PackageController = {
+
+    getAllPackages: TryCatchBlock(async (req: Request, res: Response) => {
+        const packages = await PackageService.getAllPackages();
+        res.status(200).json({
+            message: "Packages retrieved successfully",
+            data: packages,
+        });
+    }),
+
     getPackageById: TryCatchBlock(async (req: Request, res: Response) => {
         const packageId = req.params.id;
         const packageData = await PackageService.getPackageById(packageId);

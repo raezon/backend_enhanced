@@ -11,6 +11,7 @@ const {
     createConditions,
     createSteps,
     getPackageById,
+    getAllPackages,
 } = PackageController;
 router.post("/step-one", createPackage);
 router.post(
@@ -23,5 +24,6 @@ router.post("/:id/step-three", idValidator("id", "Package ID"), createAvailableS
 router.post("/:id/step-four", upload.any(), idValidator("id", "Package ID"), createSteps);
 router.post("/:id/step-five", idValidator("id", "Package ID"), createConditions);
 router.get("/:id", idValidator("id", "Package ID"), getPackageById);
+router.get("", getAllPackages);
 
 export default router;

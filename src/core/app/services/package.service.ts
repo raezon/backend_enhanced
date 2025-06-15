@@ -10,6 +10,26 @@ import { Env, prisma } from "@/config";
 import { ConstraintError } from "../base/constraint-error";
 
 export const PackageService = {
+    getAllPackages: async () => {
+        const packages = await prisma.package.findMany({
+            include: {
+                departures: true,
+                destinations: true,
+                pricePerPerson: {
+                    include: {
+                        prices: true,
+                    },
+                },
+                combinations: true,
+                supplements: true,
+                steps: true,
+                conditions: true,
+            },
+        });
+
+        return packages;
+    },
+
     getPackageById: async (id: string) => {
         const schema = Joi.object({
             id: Joi.string().uuid({ version: "uuidv4" }).required().messages({
@@ -19,7 +39,7 @@ export const PackageService = {
         });
 
         const { id: packageId } = validateInput<{ id: string }>(schema, { id });
-        
+
         const packageData = await prisma.package.findUnique({
             where: { id: packageId },
             include: {
