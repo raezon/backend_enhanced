@@ -62,6 +62,7 @@
         "ts-jest": "^29.3.1",
         "tsc-alias": "^1.8.13",
         "tsconfig-paths": "^4.2.0",
+        "tsup": "^8.5.0",
         "typescript": "^5.8.2"
     },
     "dependencies": {
@@ -85,6 +86,7 @@
         "joi": "^17.13.3",
         "jsonwebtoken": "^9.0.2",
         "lodash.merge": "^4.6.2",
+        "module-alias": "^2.2.3",
         "morgan": "^1.10.0",
         "multer": "^2.0.0",
         "nodemailer": "^7.0.3",
