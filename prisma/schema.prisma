@@ -28,18 +28,97 @@ model Hotel{
   // maxPricePerNight      Float  both are not used in the new design
 }
 
+model PricePerPerson {
+  id                String   @id @default(uuid())
+  packageId      String           @unique
+  markupPlatform Float
+  markupAgency   Float
+  package          Package @relation(fields: [packageId], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  prices          Price[]
+}
+
+model Price {
+  id                String   @id @default(uuid())
+  pricePerPersonId String
+
+  name            String
+  adultPrice      Float
+  childPrice6To11      Float
+  childPrice2To5      Float
+  infantPrice      Float
+
+  pricePerPerson  PricePerPerson @relation(fields: [pricePerPersonId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model PackageCombination {
+  id                String   @id @default(uuid())
+  packageId         String
+  package           Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  name              String
+  pension           PackagePensionType @default(ROOM_ONLY)
+  price             Float
+  majoration        Float
+  adultsNumber      Int
+  numbOfChildrenOne   Int
+  numbOfChildrenTwo   Int
+  babyPrice         Float
+  
+}
+
+enum PackagePensionType {
+  ROOM_ONLY
+  BED_AND_BREAKFAST
+  HALF_BOARD
+  FULL_BOARD
+  ALL_INCLUSIVE
+}
+
+model PackageSupplements {
+  id                String   @id @default(uuid())
+  packageId         String
+
+  package           Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  name              String
+  adultsNumber      Int
+  numbOfChildrenOne   Int
+  numbOfChildrenTwo   Int
+  babyPrice         Float
+}
+
+model Departure {
+  id                String   @id @default(uuid())
+  packageId         String
+  name             String
+  package          Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
+}
+
+model Destination {
+  id                String   @id @default(uuid())
+  packageId         String
+  name             String
+  package          Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
+}
+
 enum PackageType {
   VACATION
   OMRA
   HADJ
 }
 
+// first step of package creation (WHATEVER TOP OF THE PACKAGE (PACKAGE IS INVOLVED)
+
 model Package {
   id                String      @id @default(uuid())
   userId            String
+
   isPublic          Boolean     @default(false)
   combination_active Boolean     @default(false)
   isRecommended Boolean     @default(false)
+
   name              String
   displayName       String
   option           Float
@@ -47,11 +126,11 @@ model Package {
   departureCity    String
   type             PackageType @default(VACATION)
   shortDescription String
+
   description      String?
   importantNotes  String?
   empContract String?
   inclusion      String?
-  primaryImageUrl String?
 
   min_age_first_child Int?
   max_age_first_child Int?
@@ -63,68 +142,46 @@ model Package {
   destinations    Destination[]
   pricePerPerson  PricePerPerson? 
 
-  secondaryImages  PackageImage[]
-  slots DepartureSlot[]
-  conditions ConditionAnnulation[]
-  steps PackageStep[]
-  packageCombinations PackageCombination[]
-  packageSupplements PackageSupplements[]
+  combinations PackageCombination[] // step 1
+  supplements PackageSupplements[] // step 1
+
+  packageImages    PackageImage[] // step 2
+
+  slots DepartureSlot[] // step 3
+  conditions ConditionAnnulation[] // step 5
+  steps PackageStep[] // step 4
+
 }
 
-enum PackagePensionType {
-  ROOM_ONLY
-  BED_AND_BREAKFAST
-  HALF_BOARD
-  FULL_BOARD
-  ALL_INCLUSIVE
-}
+// start of step 2 of creating package (images part)
 
-model PackageCombination {
+model PackageImage {
   id                String   @id @default(uuid())
   packageId         String
-
+  imageUrl          String
+  isPrimary         Boolean @default(false)
   package           Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  combination      Combination[]
+  @@index([packageId])
 }
 
-model Combination {
-  id                String   @id @default(uuid())
-  packageCombinationId String
-  name              String
-  pension           PackagePensionType @default(ROOM_ONLY)
-  price             Float
-  majoration        Float
-  adultsNumber      Int
-  numbOfChildrenOne   Int
-  numbOfChildrenTwo   Int
-  babyPrice         Float
 
-  packageCombination PackageCombination @relation(fields: [packageCombinationId], references: [id], onDelete: Cascade)
-}
+// start of step 3 of creating package (availability)
 
-model PackageSupplements {
+model DepartureSlot {
   id                String   @id @default(uuid())
   packageId         String
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
+  start DateTime
+  finish DateTime
+  days Int
+  nights Int
+  initialPlace Int
   package           Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  supplements       Supplements[]
 }
 
-model Supplements {
-  id                String   @id @default(uuid())
-  packageSupplementsId String
-  name              String
-  adultsNumber      Int
-  numbOfChildrenOne   Int
-  numbOfChildrenTwo   Int
-  babyPrice         Float
-  packageSupplements PackageSupplements @relation(fields: [packageSupplementsId], references: [id], onDelete: Cascade)
-}
+// end of step 3 of creating package (availability)
 
 enum PackageStepType {
   HOTEL
@@ -142,10 +199,13 @@ model PackageStep {
   rate    Int  
   description      String
   address String
+
   primaryImageUrl   String
+
   package           Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+  
   secondaryImages  PackageStepSecondaryImages[]
 }
 
@@ -156,70 +216,23 @@ model PackageStepSecondaryImages {
   packageStep       PackageStep @relation(fields: [packageStepId], references: [id], onDelete: Cascade)
 }
 
+// start of step 5 of creating package (conditions and cancellation)
+
+enum ConditionAnnulationType {
+  PERCENTAGE
+  FIXED_PRICE
+}
+
 model ConditionAnnulation {
   id                String   @id @default(uuid())
   de DateTime
   arrival DateTime
+  nights Int?
+  percentage Float?
+  fixedPrice Float?
+  type ConditionAnnulationType? @default(FIXED_PRICE)
   packageId         String
   package          Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
-}
-
-model DepartureSlot {
-  id                String   @id @default(uuid())
-  packageId         String
-  start DateTime
-  finish DateTime
-  days Int
-  nights Int
-  initialPlace Int
-  package           Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
-}
-
-model PackageImage {
-  id                String   @id @default(uuid())
-  packageId         String   @unique
-  url               String   
-  package           Package  @relation(fields: [packageId], references: [id])
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-}
-
-model Departure {
-  id                String   @id @default(uuid())
-  packageId         String
-  name             String
-  package          Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
-}
-
-model Destination {
-  id                String   @id @default(uuid())
-  packageId         String
-  name             String
-  package          Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
-}
-
-model PricePerPerson {
-  id                String   @id @default(uuid())
-  packageId      String           @unique
-  markupPlatform Float
-  markupAgency   Float
-  package          Package @relation(fields: [packageId], references: [id])
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  prices          Price[]
-}
-
-model Price {
-  id                String   @id @default(uuid())
-  pricePerPersonId String
-  name            String
-  adultPrice      Float
-  childPrice6To11      Float
-  childPrice2To5      Float
-  infantPrice      Float
-  pricePerPerson  PricePerPerson @relation(fields: [pricePerPersonId], references: [id], onDelete: Cascade)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
 }
 
 model User {

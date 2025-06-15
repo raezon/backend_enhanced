@@ -1,5 +1,14 @@
 -- CreateEnum
+CREATE TYPE "PackagePensionType" AS ENUM ('ROOM_ONLY', 'BED_AND_BREAKFAST', 'HALF_BOARD', 'FULL_BOARD', 'ALL_INCLUSIVE');
+
+-- CreateEnum
 CREATE TYPE "PackageType" AS ENUM ('VACATION', 'OMRA', 'HADJ');
+
+-- CreateEnum
+CREATE TYPE "PackageStepType" AS ENUM ('HOTEL', 'VOL', 'TRANSFER', 'EXCURSION');
+
+-- CreateEnum
+CREATE TYPE "ConditionAnnulationType" AS ENUM ('PERCENTAGE', 'FIXED_PRICE');
 
 -- CreateTable
 CREATE TABLE "Hotel" (
@@ -27,45 +36,63 @@ CREATE TABLE "Hotel" (
 CREATE TABLE "PricePerPerson" (
     "id" TEXT NOT NULL,
     "packageId" TEXT NOT NULL,
-    "displayName" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "priceAdult" DOUBLE PRECISION NOT NULL,
-    "priceChild6To11" DOUBLE PRECISION NOT NULL,
-    "priceChild2To5" DOUBLE PRECISION NOT NULL,
-    "priceInfant" DOUBLE PRECISION NOT NULL,
-    "markupPlatform" INTEGER DEFAULT 0,
-    "markupAgency" INTEGER DEFAULT 0,
+    "markupPlatform" DOUBLE PRECISION NOT NULL,
+    "markupAgency" DOUBLE PRECISION NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "PricePerPerson_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "Package" (
+CREATE TABLE "Price" (
     "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
+    "pricePerPersonId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "isRecommended" BOOLEAN NOT NULL DEFAULT false,
-    "displayName" TEXT NOT NULL,
-    "option" DOUBLE PRECISION NOT NULL,
-    "priority" INTEGER NOT NULL DEFAULT 0,
-    "departureCity" TEXT NOT NULL,
-    "type" "PackageType" NOT NULL DEFAULT 'VACATION',
-    "shortDescription" TEXT NOT NULL,
-    "description" TEXT,
-    "importantNote" TEXT,
-    "employmentContact" TEXT,
-    "inclusion" TEXT,
+    "adultPrice" DOUBLE PRECISION NOT NULL,
+    "childPrice6To11" DOUBLE PRECISION NOT NULL,
+    "childPrice2To5" DOUBLE PRECISION NOT NULL,
+    "infantPrice" DOUBLE PRECISION NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "Package_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "Price_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "PackageCombination" (
+    "id" TEXT NOT NULL,
+    "packageId" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "pension" "PackagePensionType" NOT NULL DEFAULT 'ROOM_ONLY',
+    "price" DOUBLE PRECISION NOT NULL,
+    "majoration" DOUBLE PRECISION NOT NULL,
+    "adultsNumber" INTEGER NOT NULL,
+    "numbOfChildrenOne" INTEGER NOT NULL,
+    "numbOfChildrenTwo" INTEGER NOT NULL,
+    "babyPrice" DOUBLE PRECISION NOT NULL,
+
+    CONSTRAINT "PackageCombination_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "PackageSupplements" (
+    "id" TEXT NOT NULL,
+    "packageId" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "adultsNumber" INTEGER NOT NULL,
+    "numbOfChildrenOne" INTEGER NOT NULL,
+    "numbOfChildrenTwo" INTEGER NOT NULL,
+    "babyPrice" DOUBLE PRECISION NOT NULL,
+
+    CONSTRAINT "PackageSupplements_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Departure" (
     "id" TEXT NOT NULL,
     "packageId" TEXT NOT NULL,
-    "departureCity" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
 
     CONSTRAINT "Departure_pkey" PRIMARY KEY ("id")
 );
@@ -74,9 +101,100 @@ CREATE TABLE "Departure" (
 CREATE TABLE "Destination" (
     "id" TEXT NOT NULL,
     "packageId" TEXT NOT NULL,
-    "departureCity" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
 
     CONSTRAINT "Destination_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Package" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "isPublic" BOOLEAN NOT NULL DEFAULT false,
+    "combination_active" BOOLEAN NOT NULL DEFAULT false,
+    "isRecommended" BOOLEAN NOT NULL DEFAULT false,
+    "name" TEXT NOT NULL,
+    "displayName" TEXT NOT NULL,
+    "option" DOUBLE PRECISION NOT NULL,
+    "priority" INTEGER NOT NULL,
+    "departureCity" TEXT NOT NULL,
+    "type" "PackageType" NOT NULL DEFAULT 'VACATION',
+    "shortDescription" TEXT NOT NULL,
+    "description" TEXT,
+    "importantNotes" TEXT,
+    "empContract" TEXT,
+    "inclusion" TEXT,
+    "min_age_first_child" INTEGER,
+    "max_age_first_child" INTEGER,
+    "min_age_second_child" INTEGER,
+    "max_age_second_child" INTEGER,
+
+    CONSTRAINT "Package_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "PackageImage" (
+    "id" TEXT NOT NULL,
+    "packageId" TEXT NOT NULL,
+    "imageUrl" TEXT NOT NULL,
+    "isPrimary" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "PackageImage_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "DepartureSlot" (
+    "id" TEXT NOT NULL,
+    "packageId" TEXT NOT NULL,
+    "start" TIMESTAMP(3) NOT NULL,
+    "finish" TIMESTAMP(3) NOT NULL,
+    "days" INTEGER NOT NULL,
+    "nights" INTEGER NOT NULL,
+    "initialPlace" INTEGER NOT NULL,
+
+    CONSTRAINT "DepartureSlot_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "PackageStep" (
+    "id" TEXT NOT NULL,
+    "packageId" TEXT NOT NULL,
+    "type" "PackageStepType" NOT NULL DEFAULT 'HOTEL',
+    "hotelName" TEXT NOT NULL,
+    "nights" INTEGER NOT NULL,
+    "rate" INTEGER NOT NULL,
+    "description" TEXT NOT NULL,
+    "address" TEXT NOT NULL,
+    "primaryImageUrl" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "PackageStep_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "PackageStepSecondaryImages" (
+    "id" TEXT NOT NULL,
+    "packageStepId" TEXT NOT NULL,
+    "imageUrl" TEXT NOT NULL,
+
+    CONSTRAINT "PackageStepSecondaryImages_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ConditionAnnulation" (
+    "id" TEXT NOT NULL,
+    "de" TIMESTAMP(3) NOT NULL,
+    "arrival" TIMESTAMP(3) NOT NULL,
+    "nights" INTEGER,
+    "percentage" DOUBLE PRECISION,
+    "fixedPrice" DOUBLE PRECISION,
+    "type" "ConditionAnnulationType" DEFAULT 'FIXED_PRICE',
+    "packageId" TEXT NOT NULL,
+
+    CONSTRAINT "ConditionAnnulation_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -259,7 +377,6 @@ CREATE TABLE "VisaRequest" (
     "agencyName" TEXT NOT NULL,
     "travelStartingDate" TIMESTAMP(3) NOT NULL,
     "groupSize" INTEGER NOT NULL,
-    "documents" TEXT[],
     "nationality" TEXT NOT NULL,
     "totalPrice" TEXT NOT NULL,
     "status" TEXT NOT NULL DEFAULT 'Pending',
@@ -356,13 +473,10 @@ CREATE TABLE "ServiceFeesAccounting" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "PricePerPerson_packageId_displayName_key" ON "PricePerPerson"("packageId", "displayName");
+CREATE UNIQUE INDEX "PricePerPerson_packageId_key" ON "PricePerPerson"("packageId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Departure_packageId_departureCity_key" ON "Departure"("packageId", "departureCity");
-
--- CreateIndex
-CREATE UNIQUE INDEX "Destination_packageId_departureCity_key" ON "Destination"("packageId", "departureCity");
+CREATE INDEX "PackageImage_packageId_idx" ON "PackageImage"("packageId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_username_key" ON "User"("username");
@@ -401,16 +515,40 @@ CREATE INDEX "visa_countryId_idx" ON "Visa"("countryId");
 CREATE UNIQUE INDEX "PassengerDocuments_passengerId_documentId_key" ON "PassengerDocuments"("passengerId", "documentId");
 
 -- AddForeignKey
-ALTER TABLE "PricePerPerson" ADD CONSTRAINT "PricePerPerson_packageId_fkey" FOREIGN KEY ("packageId") REFERENCES "Package"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "PricePerPerson" ADD CONSTRAINT "PricePerPerson_packageId_fkey" FOREIGN KEY ("packageId") REFERENCES "Package"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Package" ADD CONSTRAINT "Package_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Price" ADD CONSTRAINT "Price_pricePerPersonId_fkey" FOREIGN KEY ("pricePerPersonId") REFERENCES "PricePerPerson"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PackageCombination" ADD CONSTRAINT "PackageCombination_packageId_fkey" FOREIGN KEY ("packageId") REFERENCES "Package"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PackageSupplements" ADD CONSTRAINT "PackageSupplements_packageId_fkey" FOREIGN KEY ("packageId") REFERENCES "Package"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Departure" ADD CONSTRAINT "Departure_packageId_fkey" FOREIGN KEY ("packageId") REFERENCES "Package"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Destination" ADD CONSTRAINT "Destination_packageId_fkey" FOREIGN KEY ("packageId") REFERENCES "Package"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Package" ADD CONSTRAINT "Package_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PackageImage" ADD CONSTRAINT "PackageImage_packageId_fkey" FOREIGN KEY ("packageId") REFERENCES "Package"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "DepartureSlot" ADD CONSTRAINT "DepartureSlot_packageId_fkey" FOREIGN KEY ("packageId") REFERENCES "Package"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PackageStep" ADD CONSTRAINT "PackageStep_packageId_fkey" FOREIGN KEY ("packageId") REFERENCES "Package"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PackageStepSecondaryImages" ADD CONSTRAINT "PackageStepSecondaryImages_packageStepId_fkey" FOREIGN KEY ("packageStepId") REFERENCES "PackageStep"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ConditionAnnulation" ADD CONSTRAINT "ConditionAnnulation_packageId_fkey" FOREIGN KEY ("packageId") REFERENCES "Package"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "User" ADD CONSTRAINT "User_agency_fkey" FOREIGN KEY ("agency") REFERENCES "AgencyInfos"("id") ON DELETE SET NULL ON UPDATE CASCADE;
